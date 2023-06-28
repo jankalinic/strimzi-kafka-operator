@@ -29,8 +29,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static io.strimzi.systemtest.Constants.KAFKA_SMOKE;
+import static io.strimzi.systemtest.Constants.REGRESSION;
 
 @Tag(KAFKA_SMOKE)
+@Tag(REGRESSION)
 public class KafkaVersionsST extends AbstractST {
 
     private static final Logger LOGGER = LogManager.getLogger(KafkaVersionsST.class);
