@@ -167,7 +167,7 @@ public class ResourceManager {
         for (T resource : resources) {
             ResourceType<T> type = findResourceType(resource);
 
-            setNamespaceInResource(testContext, resource);
+            //setNamespaceInResource(testContext, resource);
 
             if (resource.getMetadata().getNamespace() == null) {
                 LOGGER.info("Creating/Updating {} {}",
