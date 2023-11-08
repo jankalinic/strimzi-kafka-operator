@@ -96,13 +96,17 @@ public class KafkaUtils {
     }
 
     public static void waitUntilKafkaStatusConditionContainsMessage(String clusterName, String namespace, String pattern, long timeout) {
+        LOGGER.info("Waiting for Kafka status to contain: [" + pattern + "]" );
         TestUtils.waitFor("Kafka status to contain message [" + pattern + "]",
             Constants.GLOBAL_POLL_INTERVAL, timeout, () -> {
                 List<Condition> conditions = KafkaResource.kafkaClient().inNamespace(namespace).withName(clusterName).get().getStatus().getConditions();
                 for (Condition condition : conditions) {
                     String conditionMessage = condition.getMessage();
-                    if (conditionMessage != null && conditionMessage.matches(pattern)) {
-                        return true;
+                    if (conditionMessage != null) {
+                        LOGGER.info("Current Kafka status: [" + conditionMessage + "]" );
+                        if (conditionMessage.matches(pattern)) {
+                            return true;
+                        }
                     }
                 }
                 return false;

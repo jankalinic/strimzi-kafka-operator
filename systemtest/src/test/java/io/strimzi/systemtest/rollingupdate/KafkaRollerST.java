@@ -103,6 +103,9 @@ public class KafkaRollerST extends AbstractST {
         List<Event> events = kubeClient(testStorage.getNamespaceName()).listEventsByResourceUid(uid);
         assertThat(events, hasAllOfReasons(Scheduled, Pulled, Created, Started));
 
+        int podCount = kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), KafkaResource.getStrimziPodSetName(testStorage.getClusterName())).size();
+        LOGGER.info("Currently before scaledown we have {} pods, out of {} expected", podCount, scaledUpBrokerReplicaCount);
+
         LOGGER.info("Scaling down to {}", initialBrokerReplicaCount);
         if (Environment.isKafkaNodePoolsEnabled()) {
             KafkaNodePoolResource.replaceKafkaNodePoolResourceInSpecificNamespace(KafkaResource.getNodePoolName(testStorage.getClusterName()), knp -> knp.getSpec().setReplicas(initialBrokerReplicaCount), testStorage.getNamespaceName());
@@ -110,9 +113,11 @@ public class KafkaRollerST extends AbstractST {
             KafkaResource.replaceKafkaResourceInSpecificNamespace(testStorage.getClusterName(), k -> k.getSpec().getKafka().setReplicas(initialBrokerReplicaCount), testStorage.getNamespaceName());
         }
 
-        kubeClient().listPodsByPrefixInName(Environment.TEST_SUITE_NAMESPACE, testStorage.getClusterName()).size();
+        int podCount2 = kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), KafkaResource.getStrimziPodSetName(testStorage.getClusterName())).size();
+        LOGGER.info("Currently we have {} pods, out of {} expected", podCount2, scaledUpBrokerReplicaCount);
+
         LOGGER.info("Waiting for warning regarding preventing Kafka from scaling down when the broker to be scaled down have some partitions");
-        KafkaUtils.waitUntilKafkaStatusConditionContainsMessage(testStorage.getClusterName(), testStorage.getNamespaceName(), "Cannot scale down broker.*");
+        KafkaUtils.waitUntilKafkaStatusConditionContainsMessage(testStorage.getClusterName(), testStorage.getNamespaceName(), ".*Cannot scale down brokers.*");
         waitForPodsReady(testStorage.getNamespaceName(), testStorage.getKafkaSelector(), scaledUpBrokerReplicaCount, false);
 
         LOGGER.info("Remove Topic, thereby remove all partitions located on broker to be scaled down");
