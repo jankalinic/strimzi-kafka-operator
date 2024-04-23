@@ -120,7 +120,7 @@ public class StrimziUpgradeST extends AbstractUpgradeST {
         changeClusterOperator(acrossUpgradeData, TestConstants.CO_NAMESPACE);
         logPodImages(TestConstants.CO_NAMESPACE);
         //  Upgrade kafka
-        changeKafkaAndLogFormatVersion(acrossUpgradeData);
+        changeKafkaAndLogFormatVersion(TestConstants.CO_NAMESPACE, acrossUpgradeData);
         logPodImages(TestConstants.CO_NAMESPACE);
         checkAllImages(acrossUpgradeData, TestConstants.CO_NAMESPACE);
         // Verify that Pods are stable
@@ -148,7 +148,7 @@ public class StrimziUpgradeST extends AbstractUpgradeST {
         LOGGER.info("Rolling to new images has finished!");
         logPodImages(TestConstants.CO_NAMESPACE);
         //  Upgrade kafka
-        changeKafkaAndLogFormatVersion(acrossUpgradeData);
+        changeKafkaAndLogFormatVersion(TestConstants.CO_NAMESPACE, acrossUpgradeData);
         logPodImages(TestConstants.CO_NAMESPACE);
         checkAllImages(acrossUpgradeData, TestConstants.CO_NAMESPACE);
         // Verify that Pods are stable
@@ -187,7 +187,7 @@ public class StrimziUpgradeST extends AbstractUpgradeST {
 
         logPodImages(TestConstants.CO_NAMESPACE);
         // Upgrade kafka
-        changeKafkaAndLogFormatVersion(upgradeData);
+        changeKafkaAndLogFormatVersion(TestConstants.CO_NAMESPACE, upgradeData);
         logPodImages(TestConstants.CO_NAMESPACE);
         checkAllImages(upgradeData, TestConstants.CO_NAMESPACE);
 

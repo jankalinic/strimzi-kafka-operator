@@ -29,7 +29,7 @@ public class ConfigMapUtils {
     public static void waitForConfigMapRecovery(String namespaceName, String name, String configMapUid) {
         LOGGER.info("Waiting for ConfigMap: {}/{}-{} recovery", namespaceName, name, configMapUid);
         TestUtils.waitFor("recovery of ConfigMap: " + namespaceName + "/" + name, TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, TestConstants.TIMEOUT_FOR_RESOURCE_RECOVERY,
-            () -> !kubeClient().getConfigMapUid(name).equals(configMapUid));
+            () -> !kubeClient().getConfigMapUid(namespaceName, name).equals(configMapUid));
         LOGGER.info("ConfigMap: {}/{} was recovered", namespaceName, name);
     }
 
@@ -42,7 +42,7 @@ public class ConfigMapUtils {
                 LOGGER.info("Waiting for ConfigMap: {}/{} label to change {} -> {}", namespaceName, configMapName, entry.getKey(), entry.getValue());
                 TestUtils.waitFor("ConfigMap label to change " + entry.getKey() + " -> " + entry.getValue(), TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS,
                     TestConstants.GLOBAL_TIMEOUT, () ->
-                        kubeClient(namespaceName).getConfigMap(namespaceName, configMapName).getMetadata().getLabels().get(entry.getKey()).equals(entry.getValue())
+                        kubeClient().getConfigMap(namespaceName, configMapName).getMetadata().getLabels().get(entry.getKey()).equals(entry.getValue())
                 );
             }
         }

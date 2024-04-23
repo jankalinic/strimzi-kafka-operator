@@ -127,16 +127,12 @@ public class KubeClient {
         client.configMaps().inNamespace(configMap.getMetadata().getNamespace()).withName(configMap.getMetadata().getName()).delete();
     }
 
-    public void deleteConfigMap(String configMapName) {
-        client.configMaps().inNamespace(getNamespace()).withName(configMapName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
+    public void deleteConfigMap(String namespaceName, String configMapName) {
+        client.configMaps().inNamespace(namespaceName).withName(configMapName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
     }
 
     public ConfigMap getConfigMap(String namespaceName, String configMapName) {
         return client.configMaps().inNamespace(namespaceName).withName(configMapName).get();
-    }
-
-    public ConfigMap getConfigMap(String configMapName) {
-        return getConfigMap(getNamespace(), configMapName);
     }
 
     /**
@@ -144,43 +140,35 @@ public class KubeClient {
      * @param configMapName config map name
      * @return config map ui
      */
-    public String getConfigMapUid(String configMapName) {
-        return getConfigMap(configMapName).getMetadata().getUid();
+    public String getConfigMapUid(String namespaceName, String configMapName) {
+        return getConfigMap(namespaceName, configMapName).getMetadata().getUid();
     }
 
-    public List<ConfigMap> listConfigMapsInSpecificNamespace(String namespaceName, String namePrefix) {
+    public List<ConfigMap> listConfigMapsInNamespaceWithPrefix(String namespaceName, String namePrefix) {
         return client.configMaps().inNamespace(namespaceName).list().getItems().stream()
             .filter(cm -> cm.getMetadata().getName().startsWith(namePrefix))
             .collect(Collectors.toList());
     }
 
-    public List<ConfigMap> listConfigMaps(String namePrefix) {
-        return listConfigMapsInSpecificNamespace(getNamespace(), namePrefix);
-    }
-
-    public List<ConfigMap> listConfigMaps() {
-        return client.configMaps().inNamespace(getNamespace()).list().getItems();
+    public List<ConfigMap> listConfigMapsInNamespace(String namespaceName) {
+        return client.configMaps().inNamespace(namespaceName).list().getItems();
     }
 
     // =========================
     // ---------> POD <---------
     // =========================
 
-    public PodResource editPod(String podName) {
-        return editPod(getNamespace(), podName);
-    }
-
     public PodResource editPod(String namespaceName, String podName) {
         return client.pods().inNamespace(namespaceName).withName(podName);
     }
 
-    public String execInPod(String podName, String container, String... command) {
+    public String execInPod(String namespaceName, String podName, String container, String... command) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         LOGGER.info("Running command on pod {}: {}", podName, command);
         CountDownLatch execLatch = new CountDownLatch(1);
 
         try {
-            client.pods().inNamespace(getNamespace())
+            client.pods().inNamespace(namespaceName)
                 .withName(podName).inContainer(container)
                 .redirectingInput()
                 .writingOutput(baos)
@@ -198,33 +186,21 @@ public class KubeClient {
         return "";
     }
 
-    public List<Pod> listPods(LabelSelector selector) {
-        return client.pods().inNamespace(getNamespace()).withLabelSelector(selector).list().getItems();
-    }
-
     public List<Pod> listPods(String namespaceName, LabelSelector selector) {
         return client.pods().inNamespace(namespaceName).withLabelSelector(selector).list().getItems();
-    }
-
-    public List<Pod> listPods(Map<String, String> labelSelector) {
-        return client.pods().inNamespace(getNamespace()).withLabels(labelSelector).list().getItems();
     }
 
     public List<Pod> listPods(String namespaceName, Map<String, String> labelSelector) {
         return client.pods().inNamespace(namespaceName).withLabels(labelSelector).list().getItems();
     }
 
-    public List<Pod> listPods(String key, String value) {
-        return listPods(Collections.singletonMap(key, value));
+    public List<Pod> listPods(String namespaceName, String key, String value) {
+        return listPods(namespaceName, Collections.singletonMap(key, value));
     }
 
     public List<Pod> listPods(String namespaceName, String clusterName, String key, String value) {
         return listPods(namespaceName, Collections.singletonMap(key, value)).stream()
             .filter(pod -> pod.getMetadata().getName().startsWith(clusterName)).collect(Collectors.toList());
-    }
-
-    public List<Pod> listPods(String clusterName, String key, String value) {
-        return listPods(getNamespace(), clusterName, key, value);
     }
 
     public List<String> listPodNames(String namespaceName, LabelSelector labelSelector) {
@@ -233,14 +209,14 @@ public class KubeClient {
             .collect(Collectors.toList());
     }
 
-    public List<String> listPodNames(String key, String value) {
-        return listPods(Collections.singletonMap(key, value)).stream()
+    public List<String> listPodNames(String namespaceName, String key, String value) {
+        return listPods(namespaceName, Collections.singletonMap(key, value)).stream()
                 .map(pod -> pod.getMetadata().getName())
                 .collect(Collectors.toList());
     }
 
-    public List<String> listPodNames(String clusterName, String key, String value) {
-        return listPods(Collections.singletonMap(key, value)).stream()
+    public List<String> listPodNames(String namespaceName, String clusterName, String key, String value) {
+        return listPods(namespaceName, Collections.singletonMap(key, value)).stream()
             .filter(pod -> pod.getMetadata().getName().startsWith(clusterName))
             .map(pod -> pod.getMetadata().getName())
             .collect(Collectors.toList());
@@ -252,25 +228,12 @@ public class KubeClient {
             .collect(Collectors.toList());
     }
 
-    public List<String> listPodNames(String namespaceName, String clusterName, String key, String value) {
-        return listPods(namespaceName, Collections.singletonMap(key, value)).stream()
-            .filter(pod -> pod.getMetadata().getName().startsWith(clusterName))
-            .map(pod -> pod.getMetadata().getName())
-            .collect(Collectors.toList());
-    }
-
-    public List<Pod> listPods() {
-        return listPods(getNamespace());
-    }
-
     public List<Pod> listPods(String namespaceName) {
         return client.pods().inNamespace(namespaceName).list().getItems();
     }
 
-    public List<Pod> listPodsByNamespace(String namespaceName, String clusterName) {
-        return client.pods().inNamespace(namespaceName).list().getItems().stream()
-            .filter(pod -> pod.getMetadata().getName().startsWith(clusterName))
-            .collect(Collectors.toList());
+    public List<Pod> listPodsInNamespace(String namespaceName) {
+        return client.pods().inNamespace(namespaceName).list().getItems();
     }
 
     /**
@@ -279,14 +242,10 @@ public class KubeClient {
      * @param podNamePrefix prefix with which the name should begin
      * @return List of pods
      */
-    public List<Pod> listPodsByPrefixInName(String namespaceName, String podNamePrefix) {
+    public List<Pod> listPodsInNamespaceWithPrefix(String namespaceName, String podNamePrefix) {
         return listPods(namespaceName)
                 .stream().filter(p -> p.getMetadata().getName().startsWith(podNamePrefix))
                 .collect(Collectors.toList());
-    }
-
-    public List<Pod> listPodsByPrefixInName(String podNamePrefix) {
-        return listPodsByPrefixInName(getNamespace(), podNamePrefix);
     }
 
     /**
@@ -294,10 +253,6 @@ public class KubeClient {
      */
     public Pod getPod(String namespaceName, String name) {
         return client.pods().inNamespace(namespaceName).withName(name).get();
-    }
-
-    public Pod getPod(String name) {
-        return getPod(getNamespace(), name);
     }
 
     /**
@@ -310,10 +265,6 @@ public class KubeClient {
     /**
      * Gets pod Uid
      */
-    public String getPodUid(String name) {
-        return getPodUid(getNamespace(), name);
-    }
-
     public String getPodUid(String namespace, String name) {
         return client.pods().inNamespace(namespace).withName(name).get().getMetadata().getUid();
     }
@@ -330,14 +281,14 @@ public class KubeClient {
     }
 
     public void deletePod(Pod pod) {
-        deletePod(getNamespace(), pod);
+        deletePod(pod.getMetadata().getNamespace(), pod);
     }
 
     /**
      * Deletes pod
      */
-    public void deletePodsByLabelSelector(LabelSelector labelSelector) {
-        client.pods().inNamespace(getNamespace()).withLabelSelector(labelSelector).delete();
+    public void deletePodsByLabelSelector(String namespaceName, LabelSelector labelSelector) {
+        client.pods().inNamespace(namespaceName).withLabelSelector(labelSelector).delete();
     }
 
     // ==================================
@@ -351,19 +302,11 @@ public class KubeClient {
         return  client.apps().statefulSets().inNamespace(namespaceName).withName(statefulSetName).get();
     }
 
-    public StatefulSet getStatefulSet(String statefulSetName) {
-        return getStatefulSet(getNamespace(), statefulSetName);
-    }
-
     /**
      * Gets stateful set
      */
     public RollableScalableResource<StatefulSet> statefulSet(String namespaceName, String statefulSetName) {
         return client.apps().statefulSets().inNamespace(namespaceName).withName(statefulSetName);
-    }
-
-    public RollableScalableResource<StatefulSet> statefulSet(String statefulSetName) {
-        return statefulSet(getNamespace(), statefulSetName);
     }
 
     /**
@@ -380,17 +323,6 @@ public class KubeClient {
         return client.apps().statefulSets().inNamespace(namespaceName).withName(statefulSetName).isReady();
     }
 
-    /**
-     * Gets stateful set Uid
-     */
-    public String getStatefulSetUid(String statefulSetName) {
-        return getStatefulSet(statefulSetName).getMetadata().getUid();
-    }
-
-    public void deleteStatefulSet(String statefulSetName) {
-        client.apps().statefulSets().inNamespace(getNamespace()).withName(statefulSetName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
-    }
-
     // ================================
     // ---------> DEPLOYMENT <---------
     // ================================
@@ -402,8 +334,8 @@ public class KubeClient {
         return client.apps().deployments().inNamespace(namespaceName).withName(deploymentName).get();
     }
 
-    public String getDeploymentNameByPrefix(String namePrefix) {
-        List<Deployment> prefixDeployments = client.apps().deployments().inNamespace(getNamespace()).list().getItems().stream().filter(
+    public String getDeploymentNameByPrefix(String namespaceName, String namePrefix) {
+        List<Deployment> prefixDeployments = client.apps().deployments().inNamespace(namespaceName).list().getItems().stream().filter(
             rs -> rs.getMetadata().getName().startsWith(namePrefix)).collect(Collectors.toList());
 
         if (prefixDeployments.size() > 0) {
@@ -425,10 +357,6 @@ public class KubeClient {
      */
     public LabelSelector getDeploymentSelectors(String namespaceName, String deploymentName) {
         return client.apps().deployments().inNamespace(namespaceName).withName(deploymentName).get().getSpec().getSelector();
-    }
-
-    public LabelSelector getDeploymentSelectors(String deploymentName) {
-        return getDeploymentSelectors(getNamespace(), deploymentName);
     }
 
     /**
@@ -455,7 +383,7 @@ public class KubeClient {
     // ==========================
 
     public String getNodeAddress() {
-        return kubeClient(namespace).listNodes().get(0).getStatus().getAddresses().get(0).getAddress();
+        return kubeClient().listNodes().get(0).getStatus().getAddresses().get(0).getAddress();
     }
 
     public List<Node> listNodes() {
@@ -483,20 +411,12 @@ public class KubeClient {
         client.batch().v1().jobs().inNamespace(job.getMetadata().getNamespace()).resource(job).create();
     }
 
-    public void deleteJob(String jobName) {
-        client.batch().v1().jobs().inNamespace(getNamespace()).withName(jobName).delete();
-    }
-
     public void updateJob(Job job) {
         client.batch().v1().jobs().inNamespace(job.getMetadata().getNamespace()).resource(job).update();
     }
 
     public void deleteJob(final String namespaceName, String jobName) {
         client.batch().v1().jobs().inNamespace(namespaceName).withName(jobName).delete();
-    }
-
-    public Job getJob(String jobName) {
-        return client.batch().v1().jobs().inNamespace(getNamespace()).withName(jobName).get();
     }
 
     public Job getJob(final String namespaceName, String jobName) {
@@ -519,12 +439,8 @@ public class KubeClient {
         return job == null ? null : job.getStatus();
     }
 
-    public JobStatus getJobStatus(String jobName) {
-        return getJobStatus(getNamespace(), jobName);
-    }
-
-    public JobList getJobList() {
-        return client.batch().v1().jobs().inNamespace(getNamespace()).list();
+    public JobList getJobList(String namespaceName) {
+        return client.batch().v1().jobs().inNamespace(namespaceName).list();
     }
 
     // ============================
@@ -543,29 +459,16 @@ public class KubeClient {
         client.secrets().inNamespace(namespaceName).withName(secretName).patch(PatchContext.of(PatchType.JSON), secret);
     }
 
-
     public Secret getSecret(String namespaceName, String secretName) {
         return client.secrets().inNamespace(namespaceName).withName(secretName).get();
-    }
-
-    public Secret getSecret(String secretName) {
-        return getSecret(getNamespace(), secretName);
     }
 
     public void deleteSecret(String namespaceName, String secretName) {
         client.secrets().inNamespace(namespaceName).withName(secretName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
     }
 
-    public void deleteSecret(String secretName) {
-        deleteSecret(getNamespace(), secretName);
-    }
-
     public List<Secret> listSecrets(String namespaceName) {
         return client.secrets().inNamespace(namespaceName).list().getItems();
-    }
-
-    public List<Secret> listSecrets() {
-        return listSecrets(getNamespace());
     }
 
     // =============================
@@ -574,10 +477,6 @@ public class KubeClient {
 
     public Service getService(String namespaceName, String serviceName) {
         return client.services().inNamespace(namespaceName).withName(serviceName).get();
-    }
-
-    public Service getService(String serviceName) {
-        return getService(getNamespace(), serviceName);
     }
 
     public void createService(Service service) {
@@ -589,24 +488,20 @@ public class KubeClient {
      * @param serviceName service name
      * @return service uid
      */
-    public String getServiceUid(String serviceName) {
-        return getService(serviceName).getMetadata().getUid();
+    public String getServiceUid(String namespaceName, String serviceName) {
+        return getService(namespaceName, serviceName).getMetadata().getUid();
     }
 
     public List<Service> listServices(String namespaceName) {
         return client.services().inNamespace(namespaceName).list().getItems();
     }
 
-    public List<Service> listServices() {
-        return listServices(getNamespace());
-    }
-
-    public void deleteService(String serviceName) {
-        client.services().inNamespace(getNamespace()).withName(serviceName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
+    public void deleteService(String namespaceName, String serviceName) {
+        client.services().inNamespace(namespaceName).withName(serviceName).withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
     }
 
     public void deleteService(Service service) {
-        client.services().inNamespace(getNamespace()).resource(service).delete();
+        client.services().resource(service).delete();
     }
 
     public List<ServiceAccount> listServiceAccounts(String namespaceName) {
@@ -648,19 +543,11 @@ public class KubeClient {
     // ---------> LOG <---------
     // =========================
 
-    public String logs(String podName) {
-        return client.pods().inNamespace(getNamespace()).withName(podName).getLog();
-    }
-
-    public String logsInSpecificNamespace(String namespaceName, String podName, String containerName) {
+    public String getLogsInSpecificNamespace(String namespaceName, String podName, String containerName) {
         return client.pods().inNamespace(namespaceName).withName(podName).inContainer(containerName).getLog();
     }
 
-    public String logs(String podName, String containerName) {
-        return client.pods().inNamespace(getNamespace()).withName(podName).inContainer(containerName).getLog();
-    }
-
-    public String logsInSpecificNamespace(String namespaceName, String podName) {
+    public String getLogsInSpecificNamespace(String namespaceName, String podName) {
         return client.pods().inNamespace(namespaceName).withName(podName).getLog();
     }
 
@@ -668,12 +555,12 @@ public class KubeClient {
     // ---------> EVENTS <---------
     // ============================
 
-    public List<Event> listEvents() {
-        return client.v1().events().inNamespace(getNamespace()).list().getItems();
+    public List<Event> listEvents(String namespaceName) {
+        return client.v1().events().inNamespace(namespaceName).list().getItems();
     }
 
-    public List<Event> listEventsByResourceUid(String resourceUid) {
-        return listEvents().stream()
+    public List<Event> listEventsByResourceUid(String namespaceName, String resourceUid) {
+        return listEvents(namespaceName).stream()
                 .filter(event -> {
                     if (event.getInvolvedObject().getUid() == null) {
                         return false;
@@ -738,11 +625,11 @@ public class KubeClient {
      */
     public void createOrUpdateRoleBinding(RoleBinding roleBinding) {
         try {
-            client.rbac().roleBindings().inNamespace(getNamespace()).resource(roleBinding).create();
+            client.rbac().roleBindings().resource(roleBinding).create();
         } catch (KubernetesClientException e) {
             if (e.getCode() == 409) {
                 LOGGER.info("RoleBinding: {} is already created, going to update it", roleBinding.getMetadata().getName());
-                client.rbac().roleBindings().inNamespace(getNamespace()).resource(roleBinding).update();
+                client.rbac().roleBindings().resource(roleBinding).update();
             } else {
                 throw e;
             }
@@ -784,8 +671,8 @@ public class KubeClient {
         return client.rbac().roleBindings().inNamespace(namespaceName).list().getItems();
     }
 
-    public RoleBinding getRoleBinding(String name) {
-        return client.rbac().roleBindings().inNamespace(getNamespace()).withName(name).get();
+    public RoleBinding getRoleBinding(String namespaceName, String name) {
+        return client.rbac().roleBindings().inNamespace(namespaceName).withName(name).get();
     }
 
     public void deleteRoleBinding(String namespace, String name) {
@@ -804,19 +691,19 @@ public class KubeClient {
      */
     public void createOrUpdateRole(Role role) {
         try {
-            client.rbac().roles().inNamespace(getNamespace()).resource(role).create();
+            client.rbac().roles().resource(role).create();
         } catch (KubernetesClientException e) {
             if (e.getCode() == 409) {
                 LOGGER.info("Role: {} is already created, going to update it", role.getMetadata().getName());
-                client.rbac().roles().inNamespace(getNamespace()).resource(role).update();
+                client.rbac().roles().resource(role).update();
             } else {
                 throw e;
             }
         }
     }
 
-    public Role getRole(String name) {
-        return client.rbac().roles().inNamespace(getNamespace()).withName(name).get();
+    public Role getRole(String namespaceName, String name) {
+        return client.rbac().roles().inNamespace(namespaceName).withName(name).get();
     }
 
     public void deleteRole(String namespace, String name) {
@@ -862,20 +749,20 @@ public class KubeClient {
     // ---------> NETWORK POLICY <---------
     // ====================================
 
-    public NetworkPolicy getNetworkPolicy(String name) {
-        return client.network().networkPolicies().inNamespace(getNamespace()).withName(name).get();
+    public NetworkPolicy getNetworkPolicy(String namespaceName, String name) {
+        return client.network().networkPolicies().inNamespace(namespaceName).withName(name).get();
     }
 
     public void createNetworkPolicy(NetworkPolicy networkPolicy) {
-        client.network().networkPolicies().inNamespace(getNamespace()).resource(networkPolicy).create();
+        client.network().networkPolicies().resource(networkPolicy).create();
     }
 
-    public void deleteNetworkPolicy(String name) {
-        client.network().networkPolicies().inNamespace(getNamespace()).withName(name).delete();
+    public void deleteNetworkPolicy(String namespaceName, String name) {
+        client.network().networkPolicies().inNamespace(namespaceName).withName(name).delete();
     }
 
     public void updateNetworkPolicy(NetworkPolicy networkPolicy) {
-        client.network().networkPolicies().inNamespace(getNamespace()).resource(networkPolicy).update();
+        client.network().networkPolicies().resource(networkPolicy).update();
     }
 
     // =====================================
@@ -933,11 +820,7 @@ public class KubeClient {
      */
     public String getClusterOperatorPodName(final String namespaceName) {
         LabelSelector selector = new LabelSelectorBuilder().withMatchLabels(Map.of("strimzi.io/kind", "cluster-operator")).build();
-        return kubeClient(namespaceName).listPods(namespaceName, selector).get(0).getMetadata().getName();
-    }
-
-    public String getClusterOperatorPodName() {
-        return getClusterOperatorPodName(getNamespace());
+        return kubeClient().listPods(namespaceName, selector).get(0).getMetadata().getName();
     }
 
     /**

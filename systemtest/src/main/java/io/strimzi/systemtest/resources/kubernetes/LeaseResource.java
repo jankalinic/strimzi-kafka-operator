@@ -18,7 +18,7 @@ public class LeaseResource implements ResourceType<Lease> {
 
     @Override
     public Lease get(String namespace, String name) {
-        return kubeClient(namespace).getClient().leases().inNamespace(namespace).withName(name).get();
+        return kubeClient().getClient().leases().inNamespace(namespace).withName(name).get();
     }
 
     @Override

@@ -133,7 +133,7 @@ public class ClientUtils {
         LOGGER.info("Waiting for client Job: {}/{} to finish successfully", namespace, jobName);
         TestUtils.waitFor("client Job to finish successfully", TestConstants.GLOBAL_POLL_INTERVAL, timeoutForClientFinishJob(messageCount),
             () -> {
-                LOGGER.debug("Client Job: {}/{} has status {}", namespace, jobName, kubeClient().namespace(namespace).getJobStatus(jobName));
+                LOGGER.debug("Client Job: {}/{} has status {}", namespace, jobName, kubeClient().getJobStatus(namespace, jobName));
                 return kubeClient().checkSucceededJobStatus(namespace, jobName, 1);
             },
             () -> JobUtils.logCurrentJobStatus(jobName, namespace));
@@ -263,7 +263,7 @@ public class ClientUtils {
         List<String> notReadyMessages = messages;
         TestUtils.waitFor("client Job to contain all messages: [" + messages.toString() + "]", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.THROTTLING_EXCEPTION_TIMEOUT, () -> {
             for (String message : messages) {
-                if (kubeClient().logsInSpecificNamespace(namespace, jobPodName).contains(message)) {
+                if (kubeClient().getLogsInSpecificNamespace(namespace, jobPodName).contains(message)) {
                     notReadyMessages.remove(message);
                 }
             }
@@ -285,7 +285,7 @@ public class ClientUtils {
         LOGGER.info("Waiting for client Job: {}/{} to contain message: [{}]", namespace, jobName, message);
 
         TestUtils.waitFor("client Job to contain message: [" + message + "]", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.THROTTLING_EXCEPTION_TIMEOUT,
-            () -> kubeClient().logsInSpecificNamespace(namespace, jobPodName).contains(message),
+            () -> kubeClient().getLogsInSpecificNamespace(namespace, jobPodName).contains(message),
             () -> JobUtils.logCurrentJobStatus(jobName, namespace));
 
         if (deleteAfterSuccess) {
@@ -302,7 +302,7 @@ public class ClientUtils {
         LOGGER.info("Waiting for client Job: {}/{} to not contain message: [{}]", namespace, jobName, message);
 
         TestUtils.waitFor("client Job to contain message: [" + message + "]", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.THROTTLING_EXCEPTION_TIMEOUT,
-            () -> !kubeClient().logsInSpecificNamespace(namespace, jobPodName).contains(message),
+            () -> !kubeClient().getLogsInSpecificNamespace(namespace, jobPodName).contains(message),
             () -> JobUtils.logCurrentJobStatus(jobName, namespace));
 
         if (deleteAfterSuccess) {

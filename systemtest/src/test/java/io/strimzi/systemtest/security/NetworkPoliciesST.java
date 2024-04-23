@@ -222,7 +222,7 @@ public class NetworkPoliciesST extends AbstractST {
 
         LOGGER.info("Check metrics exported by KafkaExporter");
 
-        final String scraperPodName = kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
+        final String scraperPodName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
         MetricsCollector metricsCollector = new MetricsCollector.Builder()
             .withScraperPodName(scraperPodName)
             .withComponentName(testStorage.getClusterName())

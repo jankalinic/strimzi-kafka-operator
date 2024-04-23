@@ -681,7 +681,7 @@ public class MetricsST extends AbstractST {
         PodUtils.verifyThatRunningPodsAreStable(namespaceSecond, kafkaClusterSecondName);
 
         for (String cmName : StUtils.getKafkaConfigurationConfigMaps(namespaceSecond, kafkaClusterSecondName)) {
-            ConfigMap actualCm = kubeClient(namespaceSecond).getConfigMap(cmName);
+            ConfigMap actualCm = kubeClient().getConfigMap(namespaceSecond, cmName);
             assertThat(actualCm.getData().get(TestConstants.METRICS_CONFIG_JSON_NAME), is(metricsConfigJson));
         }
 
@@ -698,7 +698,7 @@ public class MetricsST extends AbstractST {
         PodUtils.verifyThatRunningPodsAreStable(namespaceSecond, kafkaClusterSecondName);
 
         for (String cmName : StUtils.getKafkaConfigurationConfigMaps(namespaceSecond, kafkaClusterSecondName)) {
-            ConfigMap actualCm = kubeClient(namespaceSecond).getConfigMap(cmName);
+            ConfigMap actualCm = kubeClient().getConfigMap(namespaceSecond, cmName);
             assertThat(actualCm.getData().get(TestConstants.METRICS_CONFIG_JSON_NAME), is(metricsConfigJson.replace("true", "false")));
         }
     }
@@ -762,10 +762,10 @@ public class MetricsST extends AbstractST {
         resourceManager.createResourceWithWait(KafkaUserTemplates.tlsUser(namespaceFirst, kafkaClusterFirstName, KafkaUserUtils.generateRandomNameOfKafkaUser()).build());
         resourceManager.createResourceWithWait(KafkaUserTemplates.tlsUser(namespaceFirst, kafkaClusterFirstName, KafkaUserUtils.generateRandomNameOfKafkaUser()).build());
 
-        coScraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(TestConstants.CO_NAMESPACE, coScraperName).get(0).getMetadata().getName();
-        testSuiteScraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(Environment.TEST_SUITE_NAMESPACE, testSuiteScraperName).get(0).getMetadata().getName();
-        scraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(namespaceFirst, scraperName).get(0).getMetadata().getName();
-        secondNamespaceScraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(namespaceSecond, secondScraperName).get(0).getMetadata().getName();
+        coScraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(TestConstants.CO_NAMESPACE, coScraperName).get(0).getMetadata().getName();
+        testSuiteScraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(Environment.TEST_SUITE_NAMESPACE, testSuiteScraperName).get(0).getMetadata().getName();
+        scraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(namespaceFirst, scraperName).get(0).getMetadata().getName();
+        secondNamespaceScraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(namespaceSecond, secondScraperName).get(0).getMetadata().getName();
 
         // Allow connections from clients to operators pods when NetworkPolicies are set to denied by default
         NetworkPolicyResource.allowNetworkPolicySettingsForClusterOperator(TestConstants.CO_NAMESPACE);

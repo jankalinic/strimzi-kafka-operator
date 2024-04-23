@@ -635,8 +635,8 @@ public class MigrationST extends AbstractST {
 
         LOGGER.info("Waiting until all ZK resources: {} will be deleted", String.join(",", listOfZkResources));
 
-        cmdKubeClient().namespace(testStorage.getNamespaceName())
-            .execInCurrentNamespace(Level.INFO, "wait", "--for", "delete", String.join(",", listOfZkResources),
+        cmdKubeClient()
+            .execInNamespace(testStorage.getNamespaceName(), Level.INFO, "wait", "--for", "delete", String.join(",", listOfZkResources),
                 "-l", Labels.STRIMZI_NAME_LABEL + "=" + KafkaResources.zookeeperComponentName(testStorage.getClusterName()), "--timeout=300s");
 
         if (!deleteClaim) {
@@ -649,18 +649,18 @@ public class MigrationST extends AbstractST {
 
     private void deleteClusterOperator() {
         LOGGER.info("Deleting Cluster Operator Pod");
-        Pod coPod = KubeClusterResource.kubeClient().listPodsByPrefixInName(clusterOperator.getDeploymentNamespace(), clusterOperator.getClusterOperatorName()).get(0);
+        Pod coPod = KubeClusterResource.kubeClient().listPodsInNamespaceWithPrefix(clusterOperator.getDeploymentNamespace(), clusterOperator.getClusterOperatorName()).get(0);
         KubeClusterResource.kubeClient().deletePod(clusterOperator.getDeploymentNamespace(), coPod);
         LOGGER.info("Cluster Operator Pod deleted");
     }
 
     private void assertThatTopicIsPresentInZKMetadata(String namespaceName, LabelSelector zkSelector, String topicName) {
-        String zkPodName = kubeClient().namespace(namespaceName).listPods(zkSelector).get(0).getMetadata().getName();
+        String zkPodName = kubeClient().listPods(namespaceName, zkSelector).get(0).getMetadata().getName();
 
         TestUtils.waitFor(String.join("KafkaTopic: %s to be present in ZK metadata"), TestConstants.GLOBAL_POLL_INTERVAL_MEDIUM, TestConstants.GLOBAL_STATUS_TIMEOUT,
             () -> {
                 try {
-                    String commandOutput = cmdKubeClient().namespace(namespaceName).execInPod(zkPodName, "./bin/zookeeper-shell.sh", "localhost:12181", "ls", "/brokers/topics").out().trim();
+                    String commandOutput = cmdKubeClient().execInPod(namespaceName, zkPodName, "./bin/zookeeper-shell.sh", "localhost:12181", "ls", "/brokers/topics").out().trim();
                     return commandOutput.contains(topicName);
                 } catch (Exception e) {
                     LOGGER.warn("Exception caught during command execution, message: {}", e.getMessage());
@@ -670,13 +670,13 @@ public class MigrationST extends AbstractST {
     }
 
     private void assertThatTopicIsPresentInKRaftMetadata(String namespaceName, LabelSelector controllerSelector, String topicName) {
-        String controllerPodName = kubeClient().namespace(namespaceName).listPods(controllerSelector).get(0).getMetadata().getName();
+        String controllerPodName = kubeClient().listPods(namespaceName, controllerSelector).get(0).getMetadata().getName();
         String kafkaLogDirName = KafkaUtils.getKafkaLogFolderNameInPod(namespaceName, controllerPodName);
 
         TestUtils.waitFor(String.join("KafkaTopic: %s to be present in KRaft metadata"), TestConstants.GLOBAL_POLL_INTERVAL_MEDIUM, TestConstants.GLOBAL_STATUS_TIMEOUT,
             () -> {
                 try {
-                    String commandOutput = cmdKubeClient().namespace(namespaceName).execInPod(controllerPodName, "/bin/bash", "-c", "./bin/kafka-dump-log.sh --cluster-metadata-decoder --skip-record-metadata" +
+                    String commandOutput = cmdKubeClient().execInPod(namespaceName, controllerPodName, "/bin/bash", "-c", "./bin/kafka-dump-log.sh --cluster-metadata-decoder --skip-record-metadata" +
                         " --files /var/lib/kafka/data/" + kafkaLogDirName + "/__cluster_metadata-0/00000000000000000000.log | grep " + topicName).out().trim();
                     return commandOutput.contains(topicName);
                 } catch (Exception e) {
@@ -687,12 +687,12 @@ public class MigrationST extends AbstractST {
     }
 
     private void assertThatClusterMetadataTopicPresentInBrokerPod(String namespaceName, LabelSelector brokerSelector, boolean clusterMetadataShouldExist) {
-        List<Pod> brokerPods = kubeClient().namespace(namespaceName).listPods(brokerSelector);
+        List<Pod> brokerPods = kubeClient().listPods(namespaceName, brokerSelector);
 
         for (Pod brokerPod : brokerPods) {
             String kafkaLogDirName = KafkaUtils.getKafkaLogFolderNameInPod(namespaceName, brokerPod.getMetadata().getName());
 
-            String commandOutput = cmdKubeClient().namespace(namespaceName).execInPod(brokerPod.getMetadata().getName(), "/bin/bash", "-c", "ls /var/lib/kafka/data/" + kafkaLogDirName).out().trim();
+            String commandOutput = cmdKubeClient().execInPod(namespaceName, brokerPod.getMetadata().getName(), "/bin/bash", "-c", "ls /var/lib/kafka/data/" + kafkaLogDirName).out().trim();
 
             assertThat(String.join("__cluster_metadata topic is present in Kafka Pod: %s, but it shouldn't", brokerPod.getMetadata().getName()),
                 commandOutput.contains("__cluster_metadata"), is(clusterMetadataShouldExist));

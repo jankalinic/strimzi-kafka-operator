@@ -200,10 +200,10 @@ class ConnectBuilderST extends AbstractST {
 
         KafkaConnectUtils.waitForConnectReady(testStorage.getNamespaceName(), testStorage.getClusterName());
 
-        String scraperPodName = kubeClient(testStorage.getNamespaceName()).listPodsByPrefixInName(testStorage.getScraperName()).get(0).getMetadata().getName();
+        String scraperPodName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
 
         LOGGER.info("Checking if KafkaConnect API contains EchoSink KafkaConnector");
-        String plugins = cmdKubeClient(testStorage.getNamespaceName()).execInPod(scraperPodName, "curl", "-X", "GET", "http://" + KafkaConnectResources.serviceName(testStorage.getClusterName()) + ":8083/connector-plugins").out();
+        String plugins = cmdKubeClient().execInPod(testStorage.getNamespaceName(), scraperPodName, "curl", "-X", "GET", "http://" + KafkaConnectResources.serviceName(testStorage.getClusterName()) + ":8083/connector-plugins").out();
 
         assertTrue(plugins.contains(TestConstants.ECHO_SINK_CLASS_NAME));
 
@@ -260,7 +260,7 @@ class ConnectBuilderST extends AbstractST {
         resourceManager.createResourceWithWait(kafkaClients.producerStrimzi());
         ClientUtils.waitForInstantProducerClientSuccess(testStorage);
 
-        String connectPodName = kubeClient(testStorage.getNamespaceName()).listPodNamesInSpecificNamespace(testStorage.getNamespaceName(), Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).stream()
+        String connectPodName = kubeClient().listPodNamesInSpecificNamespace(testStorage.getNamespaceName(), Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).stream()
                 .filter(it -> it.contains(testStorage.getClusterName())).toList().get(0);
         PodUtils.waitUntilMessageIsInPodLogs(testStorage.getNamespaceName(), connectPodName, "Received message with key 'null' and value '\"Hello-world - 99\"'");
     }
@@ -365,10 +365,10 @@ class ConnectBuilderST extends AbstractST {
             .build());
 
         Map<String, String> connectSnapshot = PodUtils.podSnapshot(testStorage.getNamespaceName(), testStorage.getKafkaConnectSelector());
-        String scraperPodName = kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
+        String scraperPodName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
 
         LOGGER.info("Checking that KafkaConnect API contains EchoSink KafkaConnector and not Camel-Telegram Connector class name");
-        String plugins = cmdKubeClient(testStorage.getNamespaceName()).execInPod(scraperPodName, "curl", "-X", "GET", "http://" + KafkaConnectResources.serviceName(testStorage.getClusterName()) + ":8083/connector-plugins").out();
+        String plugins = cmdKubeClient().execInPod(testStorage.getNamespaceName(), scraperPodName, "curl", "-X", "GET", "http://" + KafkaConnectResources.serviceName(testStorage.getClusterName()) + ":8083/connector-plugins").out();
 
         assertFalse(plugins.contains(CAMEL_CONNECTOR_HTTP_SINK_CLASS_NAME));
         assertTrue(plugins.contains(TestConstants.ECHO_SINK_CLASS_NAME));
@@ -510,7 +510,7 @@ class ConnectBuilderST extends AbstractST {
     }
 
     private String getPluginFileNameFromConnectPod(final String namespaceName, final String connectPodName) {
-        return cmdKubeClient(namespaceName).execInPod(connectPodName,
+        return cmdKubeClient().execInPod(namespaceName, connectPodName,
             "/bin/bash", "-c", "ls plugins/plugin-with-other-type/*").out().trim();
     }
 

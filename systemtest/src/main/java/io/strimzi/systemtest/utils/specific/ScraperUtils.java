@@ -19,7 +19,7 @@ public class ScraperUtils {
     private ScraperUtils() { }
 
     public static Pod getScraperPod(final String namespaceName) {
-        return kubeClient(namespaceName).listPods(namespaceName, getDefaultLabelSelector()).stream().findFirst().orElseThrow();
+        return kubeClient().listPods(namespaceName, getDefaultLabelSelector()).stream().findFirst().orElseThrow();
     }
 
     private static LabelSelector getDefaultLabelSelector() {

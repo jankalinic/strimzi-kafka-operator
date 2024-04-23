@@ -496,7 +496,7 @@ public class OpenTelemetryST extends AbstractST {
         SetupJaeger.deployJaegerInstance(testStorage.getNamespaceName());
 
         resourceManager.createResourceWithWait(ScraperTemplates.scraperPod(testStorage.getNamespaceName(), testStorage.getScraperName()).build());
-        testStorage.addToTestStorage(TestConstants.SCRAPER_POD_KEY, kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
+        testStorage.addToTestStorage(TestConstants.SCRAPER_POD_KEY, kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
 
         final KafkaTracingClients kafkaTracingClients = new KafkaTracingClientsBuilder()
             .withNamespaceName(testStorage.getNamespaceName())

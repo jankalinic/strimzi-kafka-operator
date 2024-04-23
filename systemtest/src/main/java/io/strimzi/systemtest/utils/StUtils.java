@@ -159,7 +159,7 @@ public class StUtils {
     }
 
     public static String checkEnvVarInPod(String namespaceName, String podName, String envVarName) {
-        return kubeClient(namespaceName).getPod(podName).getSpec().getContainers().get(0).getEnv()
+        return kubeClient().getPod(namespaceName, podName).getSpec().getContainers().get(0).getEnv()
                 .stream().filter(envVar -> envVar.getName().equals(envVarName)).findFirst().orElseThrow().getValue();
     }
 
@@ -268,7 +268,7 @@ public class StUtils {
         TestUtils.waitFor("JSON log to be present in " + pods, TestConstants.GLOBAL_POLL_INTERVAL_MEDIUM, TestConstants.GLOBAL_TIMEOUT, () -> {
             boolean isJSON = false;
             for (String podName : pods.keySet()) {
-                String log = cmdKubeClient().namespace(namespaceName).execInCurrentNamespace(Level.TRACE, "logs", podName, "-c", containerName, tail).out();
+                String log = cmdKubeClient().execInNamespace(namespaceName, Level.TRACE, "logs", podName, "-c", containerName, tail).out();
 
                 JsonArray jsonArray = getJsonArrayFromLog(log);
 
@@ -303,7 +303,7 @@ public class StUtils {
      * @return log from the pod
      */
     public static String getLogFromPodByTime(String namespaceName, String podName, String containerName, String timeSince) {
-        return cmdKubeClient().namespace(namespaceName).execInCurrentNamespace("logs", podName, "-c", containerName, "--since=" + timeSince).out();
+        return cmdKubeClient().execInNamespace(namespaceName, "logs", podName, "-c", containerName, "--since=" + timeSince).out();
     }
 
     /**
@@ -368,9 +368,9 @@ public class StUtils {
 
     public static String getLineFromPodContainer(String namespaceName, String podName, String containerName, String filePath, String grepString) {
         if (containerName == null) {
-            return KubeClusterResource.cmdKubeClient(namespaceName).execInPod(podName, "grep", "-i", grepString, filePath).out().trim();
+            return KubeClusterResource.cmdKubeClient().execInPod(namespaceName, podName, "grep", "-i", grepString, filePath).out().trim();
         } else {
-            return KubeClusterResource.cmdKubeClient(namespaceName).execInPodContainer(podName, containerName, "grep", "-i", grepString, filePath).out().trim();
+            return KubeClusterResource.cmdKubeClient().execInPodContainer(namespaceName, podName, containerName, "grep", "-i", grepString, filePath).out().trim();
         }
     }
 
@@ -431,12 +431,12 @@ public class StUtils {
     public static void copyImagePullSecrets(String namespace) {
         if (Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET != null && !Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET.isEmpty()) {
             LOGGER.info("Checking if Secret: {} is in the default Namespace", Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET);
-            if (kubeClient("default").getSecret(Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET) == null) {
+            if (kubeClient().getSecret("default", Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET) == null) {
                 throw new RuntimeException(Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET + " is not in the default Namespace!");
             }
             LOGGER.info("Creating pull Secret: {}/{}", namespace, Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET);
-            Secret pullSecret = kubeClient("default").getSecret(Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET);
-            kubeClient(namespace).createSecret(new SecretBuilder()
+            Secret pullSecret = kubeClient().getSecret("default", Environment.SYSTEM_TEST_STRIMZI_IMAGE_PULL_SECRET);
+            kubeClient().createSecret(new SecretBuilder()
                 .withApiVersion("v1")
                 .withKind("Secret")
                 .withNewMetadata()
@@ -449,12 +449,12 @@ public class StUtils {
         }
         if (Environment.CONNECT_BUILD_REGISTRY_SECRET != null && !Environment.CONNECT_BUILD_REGISTRY_SECRET.isEmpty()) {
             LOGGER.info("Checking if Secret: {} is in the default Namespace", Environment.CONNECT_BUILD_REGISTRY_SECRET);
-            if (kubeClient("default").getSecret(Environment.CONNECT_BUILD_REGISTRY_SECRET) == null) {
+            if (kubeClient().getSecret("default", Environment.CONNECT_BUILD_REGISTRY_SECRET) == null) {
                 throw new RuntimeException(Environment.CONNECT_BUILD_REGISTRY_SECRET + " is not in the default namespace!");
             }
             LOGGER.info("Creating pull Secret: {}/{}", namespace, Environment.CONNECT_BUILD_REGISTRY_SECRET);
-            Secret pullSecret = kubeClient("default").getSecret(Environment.CONNECT_BUILD_REGISTRY_SECRET);
-            kubeClient(namespace).createSecret(new SecretBuilder()
+            Secret pullSecret = kubeClient().getSecret("default", Environment.CONNECT_BUILD_REGISTRY_SECRET);
+            kubeClient().createSecret(new SecretBuilder()
                 .withApiVersion("v1")
                 .withKind("Secret")
                 .withNewMetadata()

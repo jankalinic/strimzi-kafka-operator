@@ -26,7 +26,7 @@ public class AdminClient {
         AdminTopicCommand adminTopicCommand = new AdminTopicCommand()
             .withListSubCommand();
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
 
     }
@@ -38,7 +38,7 @@ public class AdminClient {
             .withFromIndex(fromIndex)
             .withTopicCount(topicCount);
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
 
     }
@@ -49,7 +49,7 @@ public class AdminClient {
             .withTopicPrefix(topicPrefix)
             .withTopicCount(topicCount);
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
 
     }
@@ -60,7 +60,7 @@ public class AdminClient {
             .withTopicPrefix(topicPrefix)
             .withAll();
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
 
     }
@@ -73,7 +73,7 @@ public class AdminClient {
             .withTopicPrefix(topicPrefix)
             .withFromIndex(fromIndex);
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
 
     }
@@ -86,12 +86,12 @@ public class AdminClient {
             .withTopicReplicas(topicReplicas)
             .withTopicPrefix(topicPrefix);
 
-        ExecResult result = cmdKubeClient(namespaceName).execInPod(podName, false, adminTopicCommand.getCommand());
+        ExecResult result = cmdKubeClient().execInPod(namespaceName, podName, false, adminTopicCommand.getCommand());
         return result.returnCode() == 0 ? result.out() : result.err();
     }
 
     public void configureFromEnv() {
-        cmdKubeClient(namespaceName).execInPod(podName, CMD, "configure", "common", "--from-env");
+        cmdKubeClient().execInPod(namespaceName, podName, CMD, "configure", "common", "--from-env");
     }
 
     static class AdminTopicCommand {

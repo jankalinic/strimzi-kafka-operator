@@ -120,7 +120,7 @@ public class KafkaTopicUtils {
                     return true;
                 } else {
                     LOGGER.warn("KafkaTopic: {}/{} is not deleted yet! Triggering force delete by cmd client!", namespaceName, topicName);
-                    cmdKubeClient(namespaceName).deleteByName(KafkaTopic.RESOURCE_KIND, topicName);
+                    cmdKubeClient().deleteByName(namespaceName, KafkaTopic.RESOURCE_KIND, topicName);
                     return false;
                 }
             },
@@ -215,7 +215,7 @@ public class KafkaTopicUtils {
 
     public static void deleteAllKafkaTopicsByPrefixWithWait(String namespace, String prefix) {
         KafkaTopicUtils.getAllKafkaTopicsWithPrefix(namespace, prefix).forEach(topic ->
-            cmdKubeClient().namespace(namespace).deleteByName(KafkaTopic.RESOURCE_SINGULAR, topic.getMetadata().getName())
+            cmdKubeClient().deleteByName(namespace, KafkaTopic.RESOURCE_SINGULAR, topic.getMetadata().getName())
         );
     }
 

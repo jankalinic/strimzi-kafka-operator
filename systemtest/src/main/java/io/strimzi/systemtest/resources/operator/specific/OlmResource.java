@@ -68,9 +68,9 @@ public class OlmResource implements SpecificResourceType {
 
         // Make sure that operator will be created
         TestUtils.waitFor("Cluster Operator deployment creation", TestConstants.GLOBAL_POLL_INTERVAL, CR_CREATION_TIMEOUT,
-            () -> kubeClient(olmConfiguration.getNamespaceName()).getDeploymentNameByPrefix(olmConfiguration.getOlmOperatorDeploymentName()) != null);
+            () -> kubeClient().getDeploymentNameByPrefix(olmConfiguration.getNamespaceName(), olmConfiguration.getOlmOperatorDeploymentName()) != null);
 
-        deploymentName = kubeClient(olmConfiguration.getNamespaceName()).getDeploymentNameByPrefix(olmConfiguration.getOlmOperatorDeploymentName());
+        deploymentName = kubeClient().getDeploymentNameByPrefix(olmConfiguration.getNamespaceName(), olmConfiguration.getOlmOperatorDeploymentName());
         ResourceManager.setCoDeploymentName(deploymentName);
 
         // Wait for operator creation

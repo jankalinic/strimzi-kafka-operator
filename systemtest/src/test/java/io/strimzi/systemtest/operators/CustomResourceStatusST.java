@@ -487,7 +487,7 @@ class CustomResourceStatusST extends AbstractST {
                     assertThat("Plain bootstrap has incorrect host", listener.getAddresses().get(0).getHost(), is(internalAddress));
                     break;
                 case TestConstants.EXTERNAL_LISTENER_DEFAULT_NAME:
-                    Service extBootstrapService = kubeClient(Environment.TEST_SUITE_NAMESPACE).getClient().services()
+                    Service extBootstrapService = kubeClient().getClient().services()
                             .inNamespace(Environment.TEST_SUITE_NAMESPACE)
                             .withName(externalBootstrapServiceName(sharedTestStorage.getClusterName()))
                             .get();

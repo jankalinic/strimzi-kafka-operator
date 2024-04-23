@@ -188,7 +188,7 @@ public class TopicOperatorPerformanceTest extends AbstractST {
                     ScraperTemplates.scraperPod(testStorage.getNamespaceName(), testStorage.getScraperName()).build());
 
             this.testStorage.addToTestStorage(TestConstants.SCRAPER_POD_KEY,
-                    kubeClient().listPodsByPrefixInName(this.testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
+                    kubeClient().listPodsInNamespaceWithPrefix(this.testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
 
             // Create topics related to clients a
             if (numberOfClientInstances != 0) {
@@ -252,7 +252,7 @@ public class TopicOperatorPerformanceTest extends AbstractST {
             long deletionStartTimeMs = System.currentTimeMillis();
 
             LOGGER.info("Start deletion of {} KafkaTopics in namespace:{}", numberOfTopics, testStorage.getNamespaceName());
-            resourceManager.deleteResourcesOfTypeWithoutWait(KafkaTopic.RESOURCE_KIND);
+            resourceManager.deleteResourcesOfTypeWithoutWait(testStorage.getNamespaceName(), KafkaTopic.RESOURCE_KIND);
             KafkaTopicUtils.waitForTopicWithPrefixDeletion(testStorage.getNamespaceName(), topicNamePrefix);
 
             long deletionEndTime = System.currentTimeMillis();
@@ -382,7 +382,7 @@ public class TopicOperatorPerformanceTest extends AbstractST {
             );
 
             this.testStorage.addToTestStorage(TestConstants.SCRAPER_POD_KEY,
-                kubeClient().listPodsByPrefixInName(this.testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
+                kubeClient().listPodsInNamespaceWithPrefix(this.testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName());
 
             // Create topics related to clients a
             if (numberOfClientInstances != 0) {
@@ -504,7 +504,7 @@ public class TopicOperatorPerformanceTest extends AbstractST {
 
             // Delete all KafkaTopics in the scope of the current test's extension context
             LOGGER.info("Start deletion of {} KafkaTopics in namespace:{}", numberOfTopics, testStorage.getNamespaceName());
-            resourceManager.deleteResourcesOfTypeWithoutWait(KafkaTopic.RESOURCE_KIND);
+            resourceManager.deleteResourcesOfTypeWithoutWait(testStorage.getNamespaceName(), KafkaTopic.RESOURCE_KIND);
             KafkaTopicUtils.waitForTopicWithPrefixDeletion(testStorage.getNamespaceName(), topicNamePrefix);
 
             long deletionEndTime = System.currentTimeMillis();

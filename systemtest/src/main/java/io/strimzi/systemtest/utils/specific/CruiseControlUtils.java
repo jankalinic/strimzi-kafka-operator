@@ -84,7 +84,7 @@ public class CruiseControlUtils {
         }
 
         String curl = "curl -X " + method.name() + " " + args + " " + scheme + "://localhost:" + port + endpoint + endpointParameters;
-        return new ApiResult(cmdKubeClient(namespaceName).execInPodContainer(Level.DEBUG, ccPodName, CONTAINER_NAME, "/bin/bash", "-c", curl));
+        return new ApiResult(cmdKubeClient().execInPodContainer(namespaceName, Level.DEBUG, ccPodName, CONTAINER_NAME, "/bin/bash", "-c", curl));
     }
 
     @SuppressWarnings("BooleanExpressionComplexity")
@@ -153,7 +153,7 @@ public class CruiseControlUtils {
     public static Properties getKafkaCruiseControlMetricsReporterConfiguration(String namespaceName, String clusterName) throws IOException {
         String cmName = kubeClient().listPods(namespaceName, KafkaResource.getLabelSelector(clusterName, StrimziPodSetResource.getBrokerComponentName(clusterName))).get(0).getMetadata().getName();
 
-        InputStream configurationFileStream = new ByteArrayInputStream(kubeClient(namespaceName).getConfigMap(namespaceName, cmName)
+        InputStream configurationFileStream = new ByteArrayInputStream(kubeClient().getConfigMap(namespaceName, cmName)
                 .getData().get("server.config").getBytes(StandardCharsets.UTF_8));
 
         Properties configurationOfKafka = new Properties();

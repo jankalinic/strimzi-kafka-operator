@@ -125,13 +125,13 @@ public class MirrorMakerST extends AbstractST {
         VerificationUtils.verifyServiceAccountsLabels(testStorage.getNamespaceName(), testStorage.getSourceClusterName());
 
         String mmDepName = KafkaMirrorMakerResources.componentName(testStorage.getClusterName());
-        String mirrorMakerPodName = kubeClient(testStorage.getNamespaceName()).listPodsByPrefixInName(mmDepName).get(0).getMetadata().getName();
-        String kafkaMirrorMakerLogs = kubeClient(testStorage.getNamespaceName()).logs(mirrorMakerPodName);
+        String mirrorMakerPodName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), mmDepName).get(0).getMetadata().getName();
+        String kafkaMirrorMakerLogs = kubeClient().getLogsInSpecificNamespace(testStorage.getNamespaceName(), mirrorMakerPodName);
 
         assertThat(kafkaMirrorMakerLogs,
             not(containsString("keytool error: java.io.FileNotFoundException: /opt/kafka/consumer-oauth-certs/**/* (No such file or directory)")));
 
-        String podName = kubeClient(testStorage.getNamespaceName()).listPodsByNamespace(testStorage.getNamespaceName(), testStorage.getClusterName()).stream().filter(n -> n.getMetadata().getName().startsWith(KafkaMirrorMakerResources.componentName(testStorage.getClusterName()))).findFirst().orElseThrow().getMetadata().getName();
+        String podName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getClusterName()).stream().filter(n -> n.getMetadata().getName().startsWith(KafkaMirrorMakerResources.componentName(testStorage.getClusterName()))).findFirst().orElseThrow().getMetadata().getName();
         VerificationUtils.assertPodResourceRequests(testStorage.getNamespaceName(), podName, mmDepName,
                 "400M", "2", "300M", "1");
         VerificationUtils.assertJvmOptions(testStorage.getNamespaceName(), podName, KafkaMirrorMakerResources.componentName(testStorage.getClusterName()),
@@ -593,7 +593,7 @@ public class MirrorMakerST extends AbstractST {
         LOGGER.info("-------> Scaling KafkaMirrorMaker up <-------");
 
         LOGGER.info("Scaling subresource replicas to {}", scaleTo);
-        cmdKubeClient().namespace(testStorage.getNamespaceName()).scaleByName(KafkaMirrorMaker.RESOURCE_KIND, testStorage.getClusterName(), scaleTo);
+        cmdKubeClient().scaleByName(testStorage.getNamespaceName(), KafkaMirrorMaker.RESOURCE_KIND, testStorage.getClusterName(), scaleTo);
         DeploymentUtils.waitForDeploymentAndPodsReady(testStorage.getNamespaceName(), KafkaMirrorMakerResources.componentName(testStorage.getClusterName()), scaleTo);
 
         LOGGER.info("Check if replicas is set to {}, naming prefix should be same and observed generation higher", scaleTo);

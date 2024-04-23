@@ -62,7 +62,7 @@ class RecoveryST extends AbstractST {
         kubeClient().getClient().apps().deployments().inNamespace(clusterOperator.getDeploymentNamespace()).withName(clusterOperator.getClusterOperatorName()).withTimeoutInMillis(600_000L).scale(0);
         StrimziPodSetUtils.deleteStrimziPodSet(Environment.TEST_SUITE_NAMESPACE, kafkaName);
 
-        PodUtils.waitForPodsWithPrefixDeletion(kafkaName);
+        PodUtils.waitForPodsWithPrefixDeletion(Environment.TEST_SUITE_NAMESPACE, kafkaName);
         kubeClient().getClient().apps().deployments().inNamespace(clusterOperator.getDeploymentNamespace()).withName(clusterOperator.getClusterOperatorName()).withTimeoutInMillis(600_000L).scale(1);
 
         LOGGER.info("Waiting for recovery {}", kafkaName);
@@ -80,7 +80,7 @@ class RecoveryST extends AbstractST {
         kubeClient().getClient().apps().deployments().inNamespace(clusterOperator.getDeploymentNamespace()).withName(clusterOperator.getClusterOperatorName()).withTimeoutInMillis(600_000L).scale(0);
         StrimziPodSetUtils.deleteStrimziPodSet(Environment.TEST_SUITE_NAMESPACE, zookeeperName);
 
-        PodUtils.waitForPodsWithPrefixDeletion(zookeeperName);
+        PodUtils.waitForPodsWithPrefixDeletion(Environment.TEST_SUITE_NAMESPACE, zookeeperName);
         kubeClient().getClient().apps().deployments().inNamespace(clusterOperator.getDeploymentNamespace()).withName(clusterOperator.getClusterOperatorName()).withTimeoutInMillis(600_000L).scale(1);
 
         LOGGER.info("Waiting for recovery {}", zookeeperName);
@@ -96,9 +96,9 @@ class RecoveryST extends AbstractST {
         LOGGER.info("Running deleteKafkaService with cluster {}", sharedClusterName);
 
         String kafkaServiceName = KafkaResources.bootstrapServiceName(sharedClusterName);
-        String kafkaServiceUid = kubeClient().getServiceUid(kafkaServiceName);
+        String kafkaServiceUid = kubeClient().getServiceUid(Environment.TEST_SUITE_NAMESPACE, kafkaServiceName);
 
-        kubeClient().deleteService(kafkaServiceName);
+        kubeClient().deleteService(Environment.TEST_SUITE_NAMESPACE, kafkaServiceName);
 
         LOGGER.info("Waiting for creation {}", kafkaServiceName);
         ServiceUtils.waitForServiceRecovery(Environment.TEST_SUITE_NAMESPACE, kafkaServiceName, kafkaServiceUid);
@@ -114,9 +114,9 @@ class RecoveryST extends AbstractST {
         LOGGER.info("Running deleteKafkaService with cluster {}", sharedClusterName);
 
         String zookeeperServiceName = KafkaResources.zookeeperServiceName(sharedClusterName);
-        String zookeeperServiceUid = kubeClient().getServiceUid(zookeeperServiceName);
+        String zookeeperServiceUid = kubeClient().getServiceUid(Environment.TEST_SUITE_NAMESPACE, zookeeperServiceName);
 
-        kubeClient().deleteService(zookeeperServiceName);
+        kubeClient().deleteService(Environment.TEST_SUITE_NAMESPACE, zookeeperServiceName);
 
         LOGGER.info("Waiting for creation {}", zookeeperServiceName);
         ServiceUtils.waitForServiceRecovery(Environment.TEST_SUITE_NAMESPACE, zookeeperServiceName, zookeeperServiceUid);
@@ -132,9 +132,9 @@ class RecoveryST extends AbstractST {
         LOGGER.info("Running deleteKafkaHeadlessService with cluster {}", sharedClusterName);
 
         String kafkaHeadlessServiceName = KafkaResources.brokersServiceName(sharedClusterName);
-        String kafkaHeadlessServiceUid = kubeClient().getServiceUid(kafkaHeadlessServiceName);
+        String kafkaHeadlessServiceUid = kubeClient().getServiceUid(Environment.TEST_SUITE_NAMESPACE, kafkaHeadlessServiceName);
 
-        kubeClient().deleteService(kafkaHeadlessServiceName);
+        kubeClient().deleteService(Environment.TEST_SUITE_NAMESPACE, kafkaHeadlessServiceName);
 
         LOGGER.info("Waiting for creation {}", kafkaHeadlessServiceName);
         ServiceUtils.waitForServiceRecovery(Environment.TEST_SUITE_NAMESPACE, kafkaHeadlessServiceName, kafkaHeadlessServiceUid);
@@ -151,9 +151,9 @@ class RecoveryST extends AbstractST {
         LOGGER.info("Running deleteKafkaHeadlessService with cluster {}", sharedClusterName);
 
         String zookeeperHeadlessServiceName = KafkaResources.zookeeperHeadlessServiceName(sharedClusterName);
-        String zookeeperHeadlessServiceUid = kubeClient().getServiceUid(zookeeperHeadlessServiceName);
+        String zookeeperHeadlessServiceUid = kubeClient().getServiceUid(Environment.TEST_SUITE_NAMESPACE, zookeeperHeadlessServiceName);
 
-        kubeClient().deleteService(zookeeperHeadlessServiceName);
+        kubeClient().deleteService(Environment.TEST_SUITE_NAMESPACE, zookeeperHeadlessServiceName);
 
         LOGGER.info("Waiting for creation {}", zookeeperHeadlessServiceName);
         ServiceUtils.waitForServiceRecovery(Environment.TEST_SUITE_NAMESPACE, zookeeperHeadlessServiceName, zookeeperHeadlessServiceUid);
@@ -218,8 +218,8 @@ class RecoveryST extends AbstractST {
         final LabelSelector controllerSelector = KafkaResource.getLabelSelector(sharedClusterName, zkName);
 
         LOGGER.info("Deleting most of the Kafka and ZK Pods");
-        List<Pod> kafkaPodList = kubeClient().listPods(brokerSelector);
-        List<Pod> zkPodList = kubeClient().listPods(controllerSelector);
+        List<Pod> kafkaPodList = kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, brokerSelector);
+        List<Pod> zkPodList = kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, controllerSelector);
 
         kafkaPodList.subList(0, kafkaPodList.size() - 1).forEach(pod -> kubeClient().deletePod(pod));
         zkPodList.subList(0, zkPodList.size() - 1).forEach(pod -> kubeClient().deletePod(pod));

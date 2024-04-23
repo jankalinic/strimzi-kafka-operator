@@ -71,15 +71,15 @@ public class ClusterOperatorRbacST extends AbstractST {
         );
         resourceManager.createResourceWithWait(KafkaTemplates.kafkaEphemeral(testStorage.getClusterName(), 3).build());
         LOGGER.info("CO log should contain some information about ignoring forbidden access to CRB for Kafka");
-        String log = cmdKubeClient().namespace(TestConstants.CO_NAMESPACE).execInCurrentNamespace(Level.DEBUG, "logs", coPodName).out();
-        assertTrue(log.contains("Kafka(" + cmdKubeClient().namespace() + "/" + testStorage.getClusterName() + "): Ignoring forbidden access to ClusterRoleBindings resource which does not seem to be required."));
+        String log = cmdKubeClient().execInNamespace(TestConstants.CO_NAMESPACE, Level.DEBUG, "logs", coPodName).out();
+        assertTrue(log.contains("Kafka(" + TestConstants.CO_NAMESPACE + "/" + testStorage.getClusterName() + "): Ignoring forbidden access to ClusterRoleBindings resource which does not seem to be required."));
 
         LOGGER.info("Deploying KafkaConnect: {} without rack awareness, the CR should be deployed without error", testStorage.getClusterName());
         resourceManager.createResourceWithWait(KafkaConnectTemplates.kafkaConnect(testStorage.getClusterName(), Environment.TEST_SUITE_NAMESPACE, 1).build());
 
         LOGGER.info("CO log should contain some information about ignoring forbidden access to CRB for KafkaConnect");
-        log = cmdKubeClient().namespace(TestConstants.CO_NAMESPACE).execInCurrentNamespace(Level.DEBUG, "logs", coPodName).out();
-        assertTrue(log.contains("KafkaConnect(" + cmdKubeClient().namespace() + "/" + testStorage.getClusterName() + "): Ignoring forbidden access to ClusterRoleBindings resource which does not seem to be required."));
+        log = cmdKubeClient().execInNamespace(TestConstants.CO_NAMESPACE, Level.DEBUG, "logs", coPodName).out();
+        assertTrue(log.contains("KafkaConnect(" + TestConstants.CO_NAMESPACE + "/" + testStorage.getClusterName() + "): Ignoring forbidden access to ClusterRoleBindings resource which does not seem to be required."));
     }
 
     @IsolatedTest("We need for each test case its own Cluster Operator")

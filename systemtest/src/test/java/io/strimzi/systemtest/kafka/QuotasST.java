@@ -79,7 +79,7 @@ public class QuotasST extends AbstractST {
         assertThrows(WaitException.class, () -> JobUtils.waitForJobFailure(testStorage.getProducerName(), Environment.TEST_SUITE_NAMESPACE, 120_000));
 
         String brokerPodName = kubeClient().listPods(testStorage.getNamespaceName(), testStorage.getBrokerSelector()).get(0).getMetadata().getName();
-        String kafkaLog = kubeClient().logsInSpecificNamespace(testStorage.getNamespaceName(), brokerPodName);
+        String kafkaLog = kubeClient().getLogsInSpecificNamespace(testStorage.getNamespaceName(), brokerPodName);
         String softLimitLog = "disk is beyond soft limit";
         String hardLimitLog = "disk is full";
         assertThat("Kafka log doesn't contain '" + softLimitLog + "' log", kafkaLog, CoreMatchers.containsString(softLimitLog));

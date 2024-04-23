@@ -416,9 +416,9 @@ public class ResourceManager {
         LOGGER.info(String.join("", Collections.nCopies(76, "#")));
     }
 
-    public void deleteResourcesOfTypeWithoutWait(final String resourceKind) {
+    public void deleteResourcesOfTypeWithoutWait(String namespaceName, final String resourceKind) {
         // Delete all resources of the specified kind
-        cmdKubeClient().deleteAllByResource(resourceKind);
+        cmdKubeClient().deleteAllByResource(namespaceName, resourceKind);
         LOGGER.info("Deleted all resources of kind: {}", resourceKind);
 
         // Clear the instance stack of such resources
@@ -457,7 +457,7 @@ public class ResourceManager {
 
                     log.add("\nPods with conditions and messages:\n\n");
 
-                    for (Pod pod : kubeClient().namespace(customResource.getMetadata().getNamespace()).listPodsByPrefixInName(name)) {
+                    for (Pod pod : kubeClient().listPodsInNamespaceWithPrefix(customResource.getMetadata().getNamespace(), name)) {
                         log.add(pod.getMetadata().getName() + ":");
                         for (PodCondition podCondition : pod.getStatus().getConditions()) {
                             if (podCondition.getMessage() != null) {
@@ -524,12 +524,12 @@ public class ResourceManager {
         coDeploymentName = newName;
     }
 
-    public static void waitForResourceReadiness(String resourceType, String resourceName) {
+    public static void waitForResourceReadiness(String namespaceName, String resourceType, String resourceName) {
         LOGGER.info("Waiting for " + resourceType + "/" + resourceName + " readiness");
 
         TestUtils.waitFor("readiness of resource " + resourceType + "/" + resourceName,
                 TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_CMD_CLIENT_TIMEOUT,
-            () -> ResourceManager.cmdKubeClient().getResourceReadiness(resourceType, resourceName));
+            () -> ResourceManager.cmdKubeClient().getResourceReadiness(namespaceName, resourceType, resourceName));
         LOGGER.info("Resource " + resourceType + "/" + resourceName + " is ready");
     }
 

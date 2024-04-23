@@ -33,7 +33,7 @@ public class JmxUtils {
 
         scriptBody += String.join("\n", commands);
 
-        cmdKubeClient().namespace(namespaceName).execInPod(podName, "/bin/bash", "-c", "echo '" + scriptBody + "' > /tmp/" + serviceName + ".sh");
+        cmdKubeClient().execInPod(namespaceName, podName, "/bin/bash", "-c", "echo '" + scriptBody + "' > /tmp/" + serviceName + ".sh");
     }
 
     private static String getResultOfJMXTermExec(String namespaceName, String podName, String serviceName) {
@@ -45,7 +45,7 @@ public class JmxUtils {
             "/tmp/" + serviceName + ".sh"
         };
 
-        return cmdKubeClient().namespace(namespaceName).execInPod(podName, cmd).out().trim();
+        return cmdKubeClient().execInPod(namespaceName, podName, cmd).out().trim();
     }
 
     public static void downloadJmxTermToPod(String namespace, String podName) {
@@ -57,11 +57,11 @@ public class JmxUtils {
             "/tmp/jmxterm.jar"
         };
 
-        cmdKubeClient().namespace(namespace).execInPod(podName, cmd);
+        cmdKubeClient().execInPod(namespace, podName, cmd);
     }
 
     public static String collectJmxMetricsWithWait(String namespace, String serviceName, String secretName, String podName, String commands) {
-        Secret jmxSecret = kubeClient(namespace).getSecret(secretName);
+        Secret jmxSecret = kubeClient().getSecret(namespace, secretName);
 
         LOGGER.info("Getting username and password for Service: {}/{} and Secret: {}/{}", namespace, serviceName, namespace, secretName);
         String userName = Util.decodeFromBase64(jmxSecret.getData().get("jmx-username"), StandardCharsets.UTF_8);

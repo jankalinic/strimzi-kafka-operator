@@ -61,8 +61,8 @@ public class KafkaRebalanceUtils {
 
     public static String annotateKafkaRebalanceResource(Reconciliation reconciliation, String namespaceName, String resourceName, KafkaRebalanceAnnotation annotation) {
         LOGGER.infoCr(reconciliation, "Annotating KafkaRebalance: {} with annotation: {}", resourceName, annotation.toString());
-        return ResourceManager.cmdKubeClient().namespace(namespaceName)
-            .execInCurrentNamespace("annotate", "kafkarebalance", resourceName, Annotations.ANNO_STRIMZI_IO_REBALANCE + "=" + annotation.toString())
+        return ResourceManager.cmdKubeClient()
+            .execInNamespace(namespaceName, "annotate", "kafkarebalance", resourceName, Annotations.ANNO_STRIMZI_IO_REBALANCE + "=" + annotation.toString())
             .out()
             .trim();
     }

@@ -23,20 +23,20 @@ public class RoleResource implements ResourceType<Role> {
     }
     @Override
     public Role get(String namespace, String name) {
-        return ResourceManager.kubeClient().namespace(namespace).getRole(name);
+        return ResourceManager.kubeClient().getRole(namespace, name);
     }
     @Override
     public void create(Role resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createOrUpdateRole(resource);
+        ResourceManager.kubeClient().createOrUpdateRole(resource);
     }
     @Override
     public void delete(Role resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteRole(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
+        ResourceManager.kubeClient().deleteRole(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
     }
 
     @Override
     public void update(Role resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createOrUpdateRole(resource);
+        ResourceManager.kubeClient().createOrUpdateRole(resource);
     }
 
     @Override

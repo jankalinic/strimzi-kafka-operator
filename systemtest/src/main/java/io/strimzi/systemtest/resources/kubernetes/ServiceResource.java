@@ -21,21 +21,21 @@ public class ServiceResource implements ResourceType<Service> {
     }
     @Override
     public Service get(String namespace, String name) {
-        return ResourceManager.kubeClient().namespace(namespace).getService(name);
+        return ResourceManager.kubeClient().getService(namespace, name);
     }
     @Override
     public void create(Service resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createService(resource);
+        ResourceManager.kubeClient().createService(resource);
     }
     @Override
     public void delete(Service resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteService(resource);
+        ResourceManager.kubeClient().deleteService(resource);
     }
 
     @Override
     @Deprecated
     public void update(Service resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createService(resource);
+        ResourceManager.kubeClient().createService(resource);
     }
 
     @Override

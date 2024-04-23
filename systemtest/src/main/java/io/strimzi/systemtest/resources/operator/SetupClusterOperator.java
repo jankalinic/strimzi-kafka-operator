@@ -363,7 +363,7 @@ public class SetupClusterOperator {
      * which has not been used yet and also approves the installation
      */
     public void upgradeClusterOperator(OlmConfiguration olmConfiguration) {
-        if (kubeClient().listPodsByPrefixInName(ResourceManager.getCoDeploymentName()).isEmpty()) {
+        if (kubeClient().listPodsInNamespaceWithPrefix(olmConfiguration.getNamespaceName(), ResourceManager.getCoDeploymentName()).isEmpty()) {
             throw new RuntimeException("We can not perform upgrade! Cluster Operator Pod is not present.");
         }
 

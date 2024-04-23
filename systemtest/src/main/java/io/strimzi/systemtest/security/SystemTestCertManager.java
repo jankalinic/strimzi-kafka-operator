@@ -70,7 +70,7 @@ public class SystemTestCertManager {
             cmd.add("-key " + path + podName + ".key");
         }
 
-        return cmdKubeClient(namespaceName).execInPod(podName, "/bin/bash", "-c", String.join(" ", cmd)).out();
+        return cmdKubeClient().execInPod(namespaceName, podName, "/bin/bash", "-c", String.join(" ", cmd)).out();
     }
 
     public static List<String> getCertificateChain(String certificateName) {

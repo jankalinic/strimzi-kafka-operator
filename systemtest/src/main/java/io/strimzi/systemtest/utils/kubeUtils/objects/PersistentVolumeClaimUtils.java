@@ -35,7 +35,7 @@ public class PersistentVolumeClaimUtils {
         TestUtils.waitFor("PVC labels to change -> " + newLabels.toString(), TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_STATUS_TIMEOUT,
             () -> {
                 List<Boolean> allPvcsHasLabelsChanged =
-                    kubeClient(namespaceName).listPersistentVolumeClaims(namespaceName, clusterName).stream()
+                    kubeClient().listPersistentVolumeClaims(namespaceName, clusterName).stream()
                         // filter specific pvc which belongs to cluster-name
                         .filter(persistentVolumeClaim -> persistentVolumeClaim.getMetadata().getName().contains(clusterName))
                         // map each value if it is changed [False, True, True] etc.
@@ -55,7 +55,7 @@ public class PersistentVolumeClaimUtils {
         TestUtils.waitFor("PVC labels to change -> " + newAnnotation.toString(), TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_STATUS_TIMEOUT,
             () -> {
                 List<Boolean> allPvcsHasLabelsChanged =
-                    kubeClient(namespaceName).listPersistentVolumeClaims(namespaceName, clusterName).stream()
+                    kubeClient().listPersistentVolumeClaims(namespaceName, clusterName).stream()
                         // filter specific pvc which belongs to cluster-name
                         .filter(persistentVolumeClaim -> persistentVolumeClaim.getMetadata().getName().contains(clusterName))
                         // map each value if it is changed [False, True, True] etc.
@@ -82,7 +82,7 @@ public class PersistentVolumeClaimUtils {
         TestUtils.waitFor("PVC deletion", TestConstants.POLL_INTERVAL_FOR_RESOURCE_DELETION, TestConstants.GLOBAL_TIMEOUT_SHORT, () -> {
             if (kubeClient().getPersistentVolumeClaim(namespaceName, pvcName) != null) {
                 LOGGER.warn("PVC: {}/{} has not been deleted yet! Triggering force delete using cmd client!", namespaceName, pvcName);
-                cmdKubeClient(namespaceName).deleteByName("pvc", pvcName);
+                cmdKubeClient().deleteByName(namespaceName, "pvc", pvcName);
                 return false;
             }
 
@@ -104,7 +104,7 @@ public class PersistentVolumeClaimUtils {
         ).collect(Collectors.toList()).size();
 
         TestUtils.waitFor("JBOD storage deletion", TestConstants.POLL_INTERVAL_FOR_RESOURCE_DELETION, Duration.ofMinutes(6).toMillis(), () -> {
-            List<String> pvcs = kubeClient(namespaceName).listPersistentVolumeClaims(namespaceName, clusterName).stream()
+            List<String> pvcs = kubeClient().listPersistentVolumeClaims(namespaceName, clusterName).stream()
                 .filter(pvc -> pvc.getMetadata().getName().contains(clusterName))
                 .map(pvc -> pvc.getMetadata().getName())
                 .collect(Collectors.toList());

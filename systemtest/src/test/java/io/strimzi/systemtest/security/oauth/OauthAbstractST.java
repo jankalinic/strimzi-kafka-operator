@@ -146,7 +146,8 @@ public class OauthAbstractST extends AbstractST {
 
     @AfterEach
     void tearDownEach() {
-        List<Job> clusterJobList = kubeClient().getJobList().getItems()
+        // KALI - maybe not only one namespace ? idk tbh
+        List<Job> clusterJobList = kubeClient().getJobList(Environment.TEST_SUITE_NAMESPACE).getItems()
             .stream()
             .filter(
                 job -> job.getMetadata().getName().contains(storageMap.get(ResourceManager.getTestContext()).getClusterName()))

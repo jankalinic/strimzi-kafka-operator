@@ -18,7 +18,7 @@ public class JobResource implements ResourceType<Job> {
     }
     @Override
     public Job get(String namespace, String name) {
-        return ResourceManager.kubeClient().namespace(namespace).getJob(name);
+        return ResourceManager.kubeClient().getJob(namespace, name);
     }
     @Override
     public void create(Job resource) {
@@ -26,7 +26,7 @@ public class JobResource implements ResourceType<Job> {
     }
     @Override
     public void delete(Job resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteJob(resource.getMetadata().getName());
+        ResourceManager.kubeClient().deleteJob(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
     }
 
     @Override

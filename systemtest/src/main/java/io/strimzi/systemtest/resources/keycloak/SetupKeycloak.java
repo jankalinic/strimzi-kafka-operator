@@ -90,7 +90,7 @@ public class SetupKeycloak {
 
     private static void deployKeycloak(String namespaceName) {
         LOGGER.info("Deploying Keycloak instance into Namespace: {}", namespaceName);
-        cmdKubeClient(namespaceName).apply(KEYCLOAK_INSTANCE_FILE_PATH);
+        cmdKubeClient().apply(namespaceName, KEYCLOAK_INSTANCE_FILE_PATH);
 
         StatefulSetUtils.waitForAllStatefulSetPodsReady(namespaceName, "keycloak", 1);
 
@@ -103,7 +103,7 @@ public class SetupKeycloak {
 
     private static void deployPostgres(String namespaceName) {
         LOGGER.info("Deploying Postgres into Namespace: {}", namespaceName);
-        cmdKubeClient(namespaceName).apply(POSTGRES_FILE_PATH);
+        cmdKubeClient().apply(namespaceName, POSTGRES_FILE_PATH);
 
         DeploymentUtils.waitForDeploymentAndPodsReady(namespaceName, "postgres", 1);
 
@@ -181,14 +181,14 @@ public class SetupKeycloak {
 
     private static void deleteKeycloak(String namespaceName) {
         LOGGER.info("Deleting Keycloak in Namespace: {}", namespaceName);
-        cmdKubeClient(namespaceName).delete(KEYCLOAK_INSTANCE_FILE_PATH);
+        cmdKubeClient().delete(namespaceName, KEYCLOAK_INSTANCE_FILE_PATH);
         kubeClient().deleteSecret(namespaceName, KEYCLOAK_SECRET_NAME);
         DeploymentUtils.waitForDeploymentDeletion(namespaceName, KEYCLOAK_DEPLOYMENT_NAME);
     }
 
     private static void deletePostgres(String namespaceName) {
         LOGGER.info("Deleting Postgres in Namespace: {}", namespaceName);
-        cmdKubeClient(namespaceName).delete(POSTGRES_FILE_PATH);
+        cmdKubeClient().delete(namespaceName, POSTGRES_FILE_PATH);
         kubeClient().deleteSecret(namespaceName, POSTGRES_SECRET_NAME);
         DeploymentUtils.waitForDeploymentDeletion(namespaceName, "postgres");
     }

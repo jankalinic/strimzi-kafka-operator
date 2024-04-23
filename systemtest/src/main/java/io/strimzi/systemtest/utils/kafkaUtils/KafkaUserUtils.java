@@ -69,7 +69,7 @@ public class KafkaUserUtils {
                     return true;
                 } else {
                     LOGGER.warn("KafkaUser: {}/{} is not deleted yet! Triggering force delete via cmd client!", namespaceName, userName);
-                    cmdKubeClient().deleteByName(KafkaUser.RESOURCE_KIND, userName);
+                    cmdKubeClient().deleteByName(namespaceName, KafkaUser.RESOURCE_KIND, userName);
                     return false;
                 }
             },

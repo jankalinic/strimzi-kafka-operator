@@ -372,7 +372,7 @@ public class Environment {
             return hostname;
         } else {
             LOGGER.warn("For running these tests on K8s you have to have internal registry deployed using `minikube start --insecure-registry '10.0.0.0/24'` and `minikube addons enable registry`");
-            Service service = kubeClient("kube-system").getService("registry");
+            Service service = kubeClient().getService("kube-system", "registry");
 
             if (service == null)    {
                 throw new RuntimeException("Internal registry Service for pushing newly build images not found.");

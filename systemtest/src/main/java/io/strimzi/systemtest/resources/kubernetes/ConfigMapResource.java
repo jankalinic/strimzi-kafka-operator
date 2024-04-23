@@ -18,7 +18,7 @@ public class ConfigMapResource implements ResourceType<ConfigMap> {
     }
     @Override
     public ConfigMap get(String namespace, String name) {
-        return kubeClient(namespace).getConfigMap(namespace, name);
+        return kubeClient().getConfigMap(namespace, name);
     }
     @Override
     public void create(ConfigMap resource) {

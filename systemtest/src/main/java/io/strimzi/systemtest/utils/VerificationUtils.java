@@ -89,7 +89,7 @@ public class VerificationUtils {
      */
     private static List<List<String>> containerJavaCmdLines(String namespaceName, String podName, String containerName) {
         List<List<String>> result = new ArrayList<>();
-        String output = cmdKubeClient().namespace(namespaceName).execInPodContainer(podName, containerName, "/bin/bash", "-c",
+        String output = cmdKubeClient().execInPodContainer(namespaceName, podName, containerName, "/bin/bash", "-c",
                 "for proc in $(ls -1 /proc/ | grep [0-9]); do if echo \"$(ls -lh /proc/$proc/exe 2>/dev/null || true)\" | grep -q java; then cat /proc/$proc/cmdline; fi; done"
         ).out();
         for (String cmdLine : output.split("\n")) {
@@ -148,7 +148,7 @@ public class VerificationUtils {
      */
     public static void verifyComponentConfiguration(String namespaceName, String podNamePrefix, String containerName, String configKey, Map<String, Object> config) {
         LOGGER.info("Getting Pods by prefix: {} in Pod name", podNamePrefix);
-        List<Pod> pods = kubeClient().listPodsByPrefixInName(namespaceName, podNamePrefix);
+        List<Pod> pods = kubeClient().listPodsInNamespaceWithPrefix(namespaceName, podNamePrefix);
 
         if (pods.size() != 0) {
             LOGGER.info("Testing configuration for container {}", containerName);
@@ -175,7 +175,7 @@ public class VerificationUtils {
      */
     public static void verifyContainerEnvVariables(String namespaceName, String podNamePrefix, String containerName, Map<String, String> config) {
         LOGGER.info("Getting Pods by prefix: {} in Pod name", podNamePrefix);
-        List<Pod> pods = kubeClient().listPodsByPrefixInName(namespaceName, podNamePrefix);
+        List<Pod> pods = kubeClient().listPodsInNamespaceWithPrefix(namespaceName, podNamePrefix);
 
         if (pods.size() != 0) {
             LOGGER.info("Testing EnvVars configuration for container {}", containerName);
@@ -204,7 +204,7 @@ public class VerificationUtils {
      */
     public static void verifyReadinessAndLivenessProbes(String namespaceName, String podNamePrefix, String containerName, int initialDelaySeconds, int timeoutSeconds, int periodSeconds, int successThreshold, int failureThreshold) {
         LOGGER.info("Getting Pods by prefix: {} in Pod name", podNamePrefix);
-        List<Pod> pods = kubeClient().listPodsByPrefixInName(namespaceName, podNamePrefix);
+        List<Pod> pods = kubeClient().listPodsInNamespaceWithPrefix(namespaceName, podNamePrefix);
 
         if (pods.size() != 0) {
             LOGGER.info("Verifying Readiness and Liveness configuration for container {}", containerName);
@@ -263,7 +263,7 @@ public class VerificationUtils {
     public static void verifyConfigMapsLabels(String namespaceName, String clusterName, String additionalClusterName) {
         LOGGER.info("Verifying labels for Config maps");
 
-        kubeClient().listConfigMaps(namespaceName)
+        kubeClient().listConfigMapsInNamespace(namespaceName)
             .forEach(cm -> {
                 LOGGER.info("Verifying labels for CM {}", cm.getMetadata().getName());
                 if (cm.getMetadata().getName().equals(clusterName.concat("-connect-config"))) {
@@ -356,7 +356,7 @@ public class VerificationUtils {
         Map<String, String> imgFromDeplConf = getClusterOperatorDeploymentImages(clusterOperatorNamespaceName);
         List<String> brokerPods = kubeClient().listPodNames(clusterOperatorNamespaceName, KafkaResource.getLabelSelector(clusterName, StrimziPodSetResource.getBrokerComponentName(clusterName)));
 
-        final String kafkaVersion = Optional.ofNullable(Crds.kafkaOperation(kubeClient(kafkaNamespaceName).getClient()).inNamespace(kafkaNamespaceName).withName(clusterName).get().getSpec().getKafka().getVersion()).orElse(Environment.ST_KAFKA_VERSION);
+        final String kafkaVersion = Optional.ofNullable(Crds.kafkaOperation(kubeClient().getClient()).inNamespace(kafkaNamespaceName).withName(clusterName).get().getSpec().getKafka().getVersion()).orElse(Environment.ST_KAFKA_VERSION);
 
         if (!Environment.isKRaftModeEnabled()) {
             //Verifying docker image for zookeeper pods
@@ -372,13 +372,13 @@ public class VerificationUtils {
             assertThat("Kafka Pod: " + brokerPod + " uses wrong image", imgFromPod, containsString(TestUtils.parseImageMap(imgFromDeplConf.get(TestConstants.KAFKA_IMAGE_MAP)).get(kafkaVersion)));
 
             if (rackAwareEnabled) {
-                String initContainerImage = PodUtils.getInitContainerImageName(brokerPod);
+                String initContainerImage = PodUtils.getInitContainerImageName(kafkaNamespaceName, brokerPod);
                 assertThat(initContainerImage, is(imgFromDeplConf.get(TestConstants.KAFKA_INIT_IMAGE)));
             }
         });
 
         //Verifying docker image for entity-operator
-        String entityOperatorPodName = cmdKubeClient(kafkaNamespaceName).listResourcesByLabel("pod",
+        String entityOperatorPodName = cmdKubeClient().listResourcesByLabel(kafkaNamespaceName, "pod",
                 Labels.STRIMZI_NAME_LABEL + "=" + clusterName + "-entity-operator").get(0);
 
         String imgFromPod = PodUtils.getContainerImageNameFromPod(kafkaNamespaceName, entityOperatorPodName, "user-operator");
@@ -404,10 +404,10 @@ public class VerificationUtils {
         LOGGER.info("Verifying docker image name of KafkaConnect in CO");
         Map<String, String> imgFromDeplConf = VerificationUtils.getClusterOperatorDeploymentImages(clusterOperatorNamespace);
         //Verifying docker image for kafka connect
-        String connectImageName = PodUtils.getFirstContainerImageNameFromPod(connectNamespaceName, kubeClient().listPodsByPrefixInName(connectNamespaceName, KafkaConnectResources.componentName(clusterName)).
+        String connectImageName = PodUtils.getFirstContainerImageNameFromPod(connectNamespaceName, kubeClient().listPodsInNamespaceWithPrefix(connectNamespaceName, KafkaConnectResources.componentName(clusterName)).
                 get(0).getMetadata().getName());
 
-        String connectVersion = Crds.kafkaConnectOperation(kubeClient().namespace(connectNamespaceName).getClient()).inNamespace(connectNamespaceName).withName(clusterName).get().getSpec().getVersion();
+        String connectVersion = Crds.kafkaConnectOperation(kubeClient().getClient()).inNamespace(connectNamespaceName).withName(clusterName).get().getSpec().getVersion();
         if (connectVersion == null) {
             connectVersion = Environment.ST_KAFKA_VERSION;
         }

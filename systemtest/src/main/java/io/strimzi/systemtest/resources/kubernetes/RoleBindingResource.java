@@ -23,20 +23,20 @@ public class RoleBindingResource implements ResourceType<RoleBinding> {
     }
     @Override
     public RoleBinding get(String namespace, String name) {
-        return ResourceManager.kubeClient().namespace(namespace).getRoleBinding(name);
+        return ResourceManager.kubeClient().getRoleBinding(namespace, name);
     }
     @Override
     public void create(RoleBinding resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createOrUpdateRoleBinding(resource);
+        ResourceManager.kubeClient().createOrUpdateRoleBinding(resource);
     }
     @Override
     public void delete(RoleBinding resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteRoleBinding(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
+        ResourceManager.kubeClient().deleteRoleBinding(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
     }
 
     @Override
     public void update(RoleBinding resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createOrUpdateRoleBinding(resource);
+        ResourceManager.kubeClient().createOrUpdateRoleBinding(resource);
     }
 
     @Override

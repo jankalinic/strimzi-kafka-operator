@@ -58,11 +58,11 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
     }
 
     @Override
-    protected void deployKafkaClusterWithWaitForReadiness(final BundleVersionModificationData upgradeData,
+    protected void deployKafkaClusterWithWaitForReadiness(String namespaceName, final BundleVersionModificationData upgradeData,
                                                           final UpgradeKafkaVersion upgradeKafkaVersion) {
         LOGGER.info("Deploying Kafka: {} in Namespace: {}", clusterName, kubeClient().getNamespace());
 
-        if (!cmdKubeClient().getResources(getResourceApiVersion(Kafka.RESOURCE_PLURAL)).contains(clusterName)) {
+        if (!cmdKubeClient().getResources(namespaceName, getResourceApiVersion(Kafka.RESOURCE_PLURAL)).contains(clusterName)) {
             // Deploy a Kafka cluster
             if (upgradeData.getFromExamples().equals("HEAD")) {
                 resourceManager.createResourceWithWait(
@@ -116,8 +116,8 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
         DeploymentUtils.waitForDeploymentAndPodsReady(TestConstants.CO_NAMESPACE, KafkaResources.entityOperatorDeploymentName(clusterName), 1);
     }
 
-    protected void changeKafkaAndMetadataVersion(CommonVersionModificationData versionModificationData) throws IOException {
-        changeKafkaAndMetadataVersion(versionModificationData, false);
+    protected void changeKafkaAndMetadataVersion(String namespaceName, CommonVersionModificationData versionModificationData) throws IOException {
+        changeKafkaAndMetadataVersion(namespaceName, versionModificationData, false);
     }
 
     /**
@@ -129,12 +129,12 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
      * @throws IOException exception during application of YAML files
      */
     @SuppressWarnings("CyclomaticComplexity")
-    protected void changeKafkaAndMetadataVersion(CommonVersionModificationData versionModificationData, boolean replaceEvenIfMissing) throws IOException {
+    protected void changeKafkaAndMetadataVersion(String namespaceName, CommonVersionModificationData versionModificationData, boolean replaceEvenIfMissing) throws IOException {
         // Get Kafka version
-        String kafkaVersionFromCR = cmdKubeClient().getResourceJsonPath(getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, ".spec.kafka.version");
+        String kafkaVersionFromCR = cmdKubeClient().getResourceJsonPath(namespaceName, getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, ".spec.kafka.version");
         kafkaVersionFromCR = kafkaVersionFromCR.equals("") ? null : kafkaVersionFromCR;
         // Get Kafka metadata version
-        String currentMetadataVersion = cmdKubeClient().getResourceJsonPath(getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, ".spec.kafka.metadataVersion");
+        String currentMetadataVersion = cmdKubeClient().getResourceJsonPath(namespaceName, getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, ".spec.kafka.metadataVersion");
 
         String kafkaVersionFromProcedure = versionModificationData.getProcedures().getVersion();
 
@@ -152,7 +152,7 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
 
             if (kafkaVersionFromProcedure != null && !kafkaVersionFromProcedure.isEmpty() && !kafkaVersionFromCR.contains(kafkaVersionFromProcedure)) {
                 LOGGER.info("Set Kafka version to " + kafkaVersionFromProcedure);
-                cmdKubeClient().patchResource(getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, "/spec/kafka/version", kafkaVersionFromProcedure);
+                cmdKubeClient().patchResource(namespaceName, getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, "/spec/kafka/version", kafkaVersionFromProcedure);
 
                 waitForKafkaControllersAndBrokersFinishRollingUpdate();
             }
@@ -161,7 +161,7 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
 
             if (metadataVersion != null && !metadataVersion.isEmpty()) {
                 LOGGER.info("Set metadata version to {} (current version is {})", metadataVersion, currentMetadataVersion);
-                cmdKubeClient().patchResource(getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, "/spec/kafka/metadataVersion", metadataVersion);
+                cmdKubeClient().patchResource(namespaceName, getResourceApiVersion(Kafka.RESOURCE_PLURAL), clusterName, "/spec/kafka/metadataVersion", metadataVersion);
 
                 makeSnapshots();
             }
@@ -174,10 +174,10 @@ public class AbstractKRaftUpgradeST extends AbstractUpgradeST {
             fail("There are no expected images");
         }
 
-        checkContainerImages(controllerSelector, versionModificationData.getKafkaImage());
-        checkContainerImages(brokerSelector, versionModificationData.getKafkaImage());
-        checkContainerImages(eoSelector, versionModificationData.getTopicOperatorImage());
-        checkContainerImages(eoSelector, 1, versionModificationData.getUserOperatorImage());
+        checkContainerImages(namespaceName, controllerSelector, versionModificationData.getKafkaImage());
+        checkContainerImages(namespaceName, brokerSelector, versionModificationData.getKafkaImage());
+        checkContainerImages(namespaceName, eoSelector, versionModificationData.getTopicOperatorImage());
+        checkContainerImages(namespaceName, eoSelector, 1, versionModificationData.getUserOperatorImage());
     }
 
     @Override

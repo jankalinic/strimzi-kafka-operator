@@ -47,7 +47,7 @@ public class SecretUtils {
     public static void waitForSecretReady(String namespaceName, String secretName, Runnable onTimeout) {
         LOGGER.info("Waiting for Secret: {}/{} to exist", namespaceName, secretName);
         TestUtils.waitFor("Secret: " + secretName + " to exist", TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, READINESS_TIMEOUT,
-            () -> kubeClient(namespaceName).getSecret(namespaceName, secretName) != null,
+            () -> kubeClient().getSecret(namespaceName, secretName) != null,
             onTimeout);
         LOGGER.info("Secret: {}/{} created", namespaceName, secretName);
     }
@@ -55,7 +55,7 @@ public class SecretUtils {
     public static void waitForSecretDeletion(final String namespaceName, String secretName, Runnable onTimeout) {
         LOGGER.info("Waiting for Secret: {}/{} deletion", namespaceName, secretName);
         TestUtils.waitFor("Secret: " + namespaceName + "/" + secretName + " deletion", TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, READINESS_TIMEOUT,
-            () -> kubeClient(namespaceName).getSecret(namespaceName, secretName) == null,
+            () -> kubeClient().getSecret(namespaceName, secretName) == null,
             onTimeout);
         LOGGER.info("Secret: {}/{} deleted", namespaceName, secretName);
     }
@@ -66,7 +66,7 @@ public class SecretUtils {
 
     public static void createSecret(String namespaceName, String secretName, String dataKey, String dataValue) {
         LOGGER.info("Creating Secret: {}/{}", namespaceName, secretName);
-        kubeClient(namespaceName).createSecret(new SecretBuilder()
+        kubeClient().createSecret(new SecretBuilder()
             .withApiVersion("v1")
             .withKind("Secret")
             .withNewMetadata()
@@ -144,7 +144,7 @@ public class SecretUtils {
         certsPaths.put("ca.key", certAndKeyFiles.getKeyPath());
 
         Secret secret = createSecretFromFile(certsPaths, name, namespace, secretLabels);
-        kubeClient().namespace(namespace).createSecret(secret);
+        kubeClient().createSecret(secret);
         waitForSecretReady(namespace, name, () -> { });
     }
 
@@ -158,14 +158,14 @@ public class SecretUtils {
         certsPaths.put("ca.key", certAndKeyFiles.getKeyPath());
 
         Secret secret = createSecretFromFile(certsPaths, name, namespace, secretLabels);
-        kubeClient().namespace(namespace).updateSecret(secret);
+        kubeClient().updateSecret(secret);
         waitForSecretReady(namespace, name, () -> { });
     }
 
     public static void waitForCertToChange(String namespaceName, String originalCert, String secretName) {
         LOGGER.info("Waiting for Secret: {}/{} certificate to be replaced", namespaceName, secretName);
         TestUtils.waitFor("cert to be replaced", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.TIMEOUT_FOR_CLUSTER_STABLE, () -> {
-            Secret secret = kubeClient(namespaceName).getSecret(namespaceName, secretName);
+            Secret secret = kubeClient().getSecret(namespaceName, secretName);
             if (secret != null && secret.getData() != null && secret.getData().containsKey("ca.crt")) {
                 String currentCert = Util.decodeFromBase64((secret.getData().get("ca.crt")));
                 boolean changed = !originalCert.equals(currentCert);
@@ -206,13 +206,13 @@ public class SecretUtils {
         LOGGER.info("Waiting for user password will be changed to {} in Secret: {}/{}", expectedEncodedPassword, namespaceName, secretName);
         TestUtils.waitFor(String.format("user password will be changed to: %s in secret: %s(%s)", expectedEncodedPassword, namespaceName, secretName),
             TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_TIMEOUT,
-            () -> kubeClient().namespace(namespaceName).getSecret(secretName).getData().get("password").equals(expectedEncodedPassword));
+            () -> kubeClient().getSecret(namespaceName, secretName).getData().get("password").equals(expectedEncodedPassword));
     }
 
     public static String annotateSecret(String namespaceName, String secretName, String annotationKey, String annotationValue) {
         LOGGER.info("Annotating Secret: {}/{} with annotation {}={}", namespaceName, secretName, annotationKey, annotationValue);
-        return ResourceManager.cmdKubeClient().namespace(namespaceName)
-                .execInCurrentNamespace("annotate", "secret", secretName, annotationKey + "=" + annotationValue)
+        return ResourceManager.cmdKubeClient()
+                .execInNamespace(namespaceName, "annotate", "secret", secretName, annotationKey + "=" + annotationValue)
                 .out()
                 .trim();
     }
@@ -263,9 +263,10 @@ public class SecretUtils {
             File clientPrivateKey = OpenSsl.generatePrivateKey();
 
             File csr = OpenSsl.generateCertSigningRequest(clientPrivateKey, "/CN=" + userName);
-            String caCrt = KubeClusterResource.kubeClient(namespaceName).getSecret(
+            String caCrt = KubeClusterResource.kubeClient().getSecret(namespaceName,
                 KafkaResources.clientsCaCertificateSecretName(clusterName)).getData().get("ca.crt");
-            String caKey = KubeClusterResource.kubeClient(namespaceName).getSecret(KafkaResources.clientsCaKeySecretName(clusterName)).getData().get("ca.key");
+            String caKey = KubeClusterResource.kubeClient().getSecret(namespaceName,
+                KafkaResources.clientsCaKeySecretName(clusterName)).getData().get("ca.key");
 
             File clientCert = OpenSsl.generateSignedCert(csr,
                                                          SystemTestCertManager.exportCaDataToFile(Util.decodeFromBase64(caCrt, StandardCharsets.UTF_8), "ca", ".crt"),
@@ -282,7 +283,7 @@ public class SecretUtils {
                 .withType("Opaque")
                 .build();
 
-            kubeClient().namespace(namespaceName).createSecret(secretBuilder);
+            kubeClient().createSecret(secretBuilder);
             SecretUtils.waitForSecretReady(namespaceName, userName, () -> { });
         } catch (IOException e) {
             throw new RuntimeException(e);

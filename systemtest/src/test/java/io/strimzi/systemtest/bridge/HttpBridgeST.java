@@ -247,7 +247,7 @@ class HttpBridgeST extends AbstractST {
             .endMetadata()
             .build());
 
-        List<String> bridgePods = kubeClient(Environment.TEST_SUITE_NAMESPACE).listPodNames(Labels.STRIMZI_CLUSTER_LABEL, bridgeName);
+        List<String> bridgePods = kubeClient().listPodNames(Environment.TEST_SUITE_NAMESPACE, Labels.STRIMZI_CLUSTER_LABEL, bridgeName);
         String deploymentName = KafkaBridgeResources.componentName(bridgeName);
 
         assertThat(bridgePods.size(), is(1));
@@ -277,17 +277,17 @@ class HttpBridgeST extends AbstractST {
 
         int scaleTo = 4;
         long bridgeObsGen = KafkaBridgeResource.kafkaBridgeClient().inNamespace(Environment.TEST_SUITE_NAMESPACE).withName(bridgeName).get().getStatus().getObservedGeneration();
-        String bridgeGenName = kubeClient(Environment.TEST_SUITE_NAMESPACE).listPodsByPrefixInName(bridgeName).get(0).getMetadata().getGenerateName();
+        String bridgeGenName = kubeClient().listPodsInNamespaceWithPrefix(Environment.TEST_SUITE_NAMESPACE, bridgeName).get(0).getMetadata().getGenerateName();
 
         LOGGER.info("-------> Scaling KafkaBridge subresource <-------");
         LOGGER.info("Scaling subresource replicas to {}", scaleTo);
-        cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).scaleByName(KafkaBridge.RESOURCE_KIND, bridgeName, scaleTo);
+        cmdKubeClient().scaleByName(Environment.TEST_SUITE_NAMESPACE, KafkaBridge.RESOURCE_KIND, bridgeName, scaleTo);
         DeploymentUtils.waitForDeploymentAndPodsReady(Environment.TEST_SUITE_NAMESPACE, KafkaBridgeResources.componentName(bridgeName), scaleTo);
 
         LOGGER.info("Check if replicas is set to {}, naming prefix should be same and observed generation higher", scaleTo);
         StUtils.waitUntilSupplierIsSatisfied(
             () -> {
-                List<String> bridgePods = kubeClient(Environment.TEST_SUITE_NAMESPACE).listPodNames(Labels.STRIMZI_CLUSTER_LABEL, bridgeName);
+                List<String> bridgePods = kubeClient().listPodNames(Environment.TEST_SUITE_NAMESPACE, Labels.STRIMZI_CLUSTER_LABEL, bridgeName);
 
                 return bridgePods.size() == 4 &&
                     KafkaBridgeResource.kafkaBridgeClient().inNamespace(Environment.TEST_SUITE_NAMESPACE).withName(bridgeName).get().getSpec().getReplicas() == 4 &&
@@ -299,7 +299,7 @@ class HttpBridgeST extends AbstractST {
                     bridgeObsGen < KafkaBridgeResource.kafkaBridgeClient().inNamespace(Environment.TEST_SUITE_NAMESPACE).withName(bridgeName).get().getStatus().getObservedGeneration();
             });
 
-        for (final String pod : kubeClient(Environment.TEST_SUITE_NAMESPACE).listPodNames(Labels.STRIMZI_CLUSTER_LABEL, bridgeName)) {
+        for (final String pod : kubeClient().listPodNames(Environment.TEST_SUITE_NAMESPACE, Labels.STRIMZI_CLUSTER_LABEL, bridgeName)) {
             assertThat(pod.contains(bridgeGenName), is(true));
         }
     }

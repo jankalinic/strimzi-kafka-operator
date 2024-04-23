@@ -52,7 +52,7 @@ public class SetupJaeger {
      * Delete Jaeger instance
      */
     private static void deleteJaeger(String yamlContent) {
-        cmdKubeClient().namespace(Environment.TEST_SUITE_NAMESPACE).deleteContent(yamlContent);
+        cmdKubeClient().deleteContent(Environment.TEST_SUITE_NAMESPACE, yamlContent);
     }
 
     /**
@@ -77,7 +77,7 @@ public class SetupJaeger {
      * Deletes all Cert Manager resources and waits for their deletion
      */
     private static void deleteCertManager() {
-        cmdKubeClient().delete(CERT_MANAGER_PATH);
+        cmdKubeClient().delete(CERT_MANAGER_NAMESPACE, CERT_MANAGER_PATH);
         DeploymentUtils.waitForDeploymentDeletion(CERT_MANAGER_NAMESPACE, CERT_MANAGER_DEPLOYMENT);
         DeploymentUtils.waitForDeploymentDeletion(CERT_MANAGER_NAMESPACE, CERT_MANAGER_WEBHOOK_DEPLOYMENT);
         DeploymentUtils.waitForDeploymentDeletion(CERT_MANAGER_NAMESPACE, CERT_MANAGER_CA_INJECTOR_DEPLOYMENT);
@@ -92,7 +92,7 @@ public class SetupJaeger {
 
         LOGGER.info("Deploying CertManager from {}", CERT_MANAGER_PATH);
         // because we don't want to apply CertManager's file to specific namespace, passing the empty String will do the trick
-        cmdKubeClient("").apply(CERT_MANAGER_PATH);
+        cmdKubeClient().apply(CERT_MANAGER_NAMESPACE, CERT_MANAGER_PATH);
 
         ResourceManager.STORED_RESOURCES.get(ResourceManager.getTestContext().getDisplayName()).push(new ResourceItem<>(SetupJaeger::deleteCertManager));
     }
@@ -124,7 +124,7 @@ public class SetupJaeger {
                 String jaegerOperator = Files.readString(Paths.get(JAEGER_OPERATOR_PATH)).replace("observability", Environment.TEST_SUITE_NAMESPACE);
 
                 LOGGER.info("Creating Jaeger Operator (and needed resources) from {}", JAEGER_OPERATOR_PATH);
-                cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).applyContent(jaegerOperator);
+                cmdKubeClient().applyContent(Environment.TEST_SUITE_NAMESPACE, jaegerOperator);
                 ResourceManager.STORED_RESOURCES.get(ResourceManager.getTestContext().getDisplayName()).push(new ResourceItem<>(() -> deleteJaeger(jaegerOperator)));
 
                 return true;
@@ -173,10 +173,10 @@ public class SetupJaeger {
         LOGGER.info("=== Applying jaeger instance install file ===");
 
         String instanceYamlContent = TestUtils.getContent(new File(JAEGER_INSTANCE_PATH), TestUtils::toYamlString);
-        cmdKubeClient(namespaceName).applyContent(instanceYamlContent);
+        cmdKubeClient().applyContent(namespaceName, instanceYamlContent);
 
         ResourceManager.STORED_RESOURCES.computeIfAbsent(ResourceManager.getTestContext().getDisplayName(), k -> new Stack<>());
-        ResourceManager.STORED_RESOURCES.get(ResourceManager.getTestContext().getDisplayName()).push(new ResourceItem<>(() -> cmdKubeClient(namespaceName).deleteContent(instanceYamlContent)));
+        ResourceManager.STORED_RESOURCES.get(ResourceManager.getTestContext().getDisplayName()).push(new ResourceItem<>(() -> cmdKubeClient().deleteContent(namespaceName, instanceYamlContent)));
 
         DeploymentUtils.waitForDeploymentAndPodsReady(namespaceName, JAEGER_INSTANCE_NAME, 1);
 

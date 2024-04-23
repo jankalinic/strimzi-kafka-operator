@@ -265,7 +265,7 @@ public class LogCollector {
 
     private void collectEvents(String namespace) {
         LOGGER.info("Collecting events in Namespace: {}", namespace);
-        String events = cmdKubeClient(namespace).getEvents();
+        String events = cmdKubeClient().getEvents(namespace);
         // Write events to file
         writeFile(namespacePath.resolve("events.log"), events);
     }
@@ -274,7 +274,7 @@ public class LogCollector {
         Path configMapPath = namespacePath.resolve("configmaps");
         if (configMapPath.toFile().exists() || configMapPath.toFile().mkdirs()) {
             LOGGER.info("Collecting ConfigMaps in Namespace: {}", namespace);
-            kubeClient.listConfigMaps(namespace).forEach(configMap ->
+            kubeClient.listConfigMapsInNamespace(namespace).forEach(configMap ->
                     writeFile(configMapPath.resolve(configMap.getMetadata().getName() + ".log"), configMap.toString()));
         }
     }
@@ -309,18 +309,18 @@ public class LogCollector {
 
     private void collectResource(String kind, String namespace) {
         LOGGER.info("Collecting: {} in Namespace: {}", kind, namespace);
-        writeFile(namespacePath.resolve(String.format("%ss.log", kind.toLowerCase(Locale.ROOT))), cmdKubeClient(namespace).getResourcesAsYaml(kind.toLowerCase(Locale.ROOT)));
+        writeFile(namespacePath.resolve(String.format("%ss.log", kind.toLowerCase(Locale.ROOT))), cmdKubeClient().getResourcesAsYaml(namespace, kind.toLowerCase(Locale.ROOT)));
     }
 
     private void collectStrimzi(String namespace) {
         LOGGER.info("Collecting Strimzi resources in Namespace: {}", namespace);
-        String crData = cmdKubeClient(namespace).exec(false, Level.DEBUG, "get", "strimzi", "-o", "yaml", "-n", namespace).out();
+        String crData = cmdKubeClient().execInNamespace(namespace, Level.DEBUG, "get", "strimzi", "-o", "yaml", "-n", namespace).out();
         writeFile(namespacePath.resolve("strimzi-custom-resources.log"), crData);
     }
 
     private void collectDeployments(String namespace) {
         LOGGER.info("Collecting Deployments resources in Namespace: {}", namespace);
-        String crData = cmdKubeClient(namespace).exec(false, Level.DEBUG, "get", "deployment", "-o", "yaml", "-n", namespace).out();
+        String crData = cmdKubeClient().execInNamespace(namespace, Level.DEBUG, "get", "deployment", "-o", "yaml", "-n", namespace).out();
         writeFile(namespacePath.resolve("deployments.log"), crData);
     }
 
@@ -332,19 +332,19 @@ public class LogCollector {
 
     private void collectOperatorGroups(String namespace) {
         LOGGER.info("Collecting OperatorGroups in Namespace: {}", namespace);
-        String operatorGroups = cmdKubeClient(namespace).exec(false, Level.DEBUG, "get", "operatorGroups", "-o", "yaml", "-n", namespace).out();
+        String operatorGroups = cmdKubeClient().execInNamespace(namespace, Level.DEBUG, "get", "operatorGroups", "-o", "yaml", "-n", namespace).out();
         writeFile(namespacePath.resolve("operator-groups.log"), operatorGroups);
     }
 
     private void collectSubscriptions(String namespace) {
         LOGGER.info("Collecting Subscriptions in Namespace: {}", namespace);
-        String subscriptions = cmdKubeClient(namespace).exec(false, Level.DEBUG, "get", "subscriptions", "-o", "yaml", "-n", namespace).out();
+        String subscriptions = cmdKubeClient().execInNamespace(namespace, Level.DEBUG, "get", "subscriptions", "-o", "yaml", "-n", namespace).out();
         writeFile(namespacePath.resolve("subscriptions.log"), subscriptions);
     }
 
     private void collectClusterServiceVersions(String namespace) {
         LOGGER.info("Collecting ClusterServiceVersions in Namespace: {}", namespace);
-        String clusterServiceVersions = cmdKubeClient(namespace).exec(false, Level.DEBUG, "get", "clusterServiceVersions", "-o", "yaml", "-n", namespace).out();
+        String clusterServiceVersions = cmdKubeClient().execInNamespace(namespace, Level.DEBUG, "get", "clusterServiceVersions", "-o", "yaml", "-n", namespace).out();
         writeFile(namespacePath.resolve("cluster-service-versions.log"), clusterServiceVersions);
     }
 
@@ -366,7 +366,7 @@ public class LogCollector {
         }
 
         // Describe all Pods
-        String describe = cmdKubeClient(namespace).describe("pod", podName);
+        String describe = cmdKubeClient().describe(namespace, "pod", podName);
         writeFile(path.resolve("describe-pod-" + podName + "-container-" + containerStatus.getName() + ".log"), describe);
     }
 }

@@ -33,7 +33,7 @@ public class ServiceUtils {
                 LOGGER.info("Waiting for Service label to change {} -> {}", entry.getKey(), entry.getValue());
                 TestUtils.waitFor("Service label to change " + entry.getKey() + " -> " + entry.getValue(), TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS,
                     TestConstants.GLOBAL_TIMEOUT, () ->
-                        kubeClient(namespaceName).getService(namespaceName, serviceName).getMetadata().getLabels().get(entry.getKey()).equals(entry.getValue())
+                        kubeClient().getService(namespaceName, serviceName).getMetadata().getLabels().get(entry.getKey()).equals(entry.getValue())
                 );
             }
         }
@@ -44,7 +44,7 @@ public class ServiceUtils {
             LOGGER.info("Service label {} to change to {}", labelKey, null);
             TestUtils.waitFor("Service label: " + labelKey + " change to " + null, TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS,
                 DELETION_TIMEOUT, () ->
-                    kubeClient(namespaceName).getService(namespaceName, serviceName).getMetadata().getLabels().get(labelKey) == null
+                    kubeClient().getService(namespaceName, serviceName).getMetadata().getLabels().get(labelKey) == null
             );
         }
     }
@@ -58,7 +58,7 @@ public class ServiceUtils {
         LOGGER.info("Waiting for Service: {}/{}-{} to be recovered", namespaceName, serviceName, serviceUid);
 
         TestUtils.waitFor("recovery of Service: " + serviceName + "/" + namespaceName, TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, TestConstants.TIMEOUT_FOR_RESOURCE_RECOVERY,
-            () -> !kubeClient().getServiceUid(serviceName).equals(serviceUid));
+            () -> !kubeClient().getServiceUid(namespaceName, serviceName).equals(serviceUid));
         LOGGER.info("Service: {}/{} is recovered", namespaceName, serviceName);
     }
 

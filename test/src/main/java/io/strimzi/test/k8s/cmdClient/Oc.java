@@ -47,7 +47,7 @@ public class Oc extends BaseCmdKubeClient<Oc> {
     }
 
     public Oc newApp(String template, Map<String, String> params) {
-        List<String> cmd = namespacedCommand("new-app", template);
+        List<String> cmd = namespacelessCommand("new-app", template);
         for (Map.Entry<String, String> entry : params.entrySet()) {
             cmd.add("-p");
             cmd.add(entry.getKey() + "=" + entry.getValue());

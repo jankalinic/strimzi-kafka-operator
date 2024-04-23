@@ -535,7 +535,7 @@ class RollingUpdateST extends AbstractST {
         // scale down
         LOGGER.info("Scale down ZooKeeper to {}", initialZkReplicas);
         // Get zk-3 uid before deletion
-        String uid = kubeClient(testStorage.getNamespaceName()).getPodUid(newZkPodNames.get(3));
+        String uid = kubeClient().getPodUid(testStorage.getNamespaceName(), newZkPodNames.get(3));
 
         KafkaResource.replaceKafkaResourceInSpecificNamespace(testStorage.getClusterName(), k -> k.getSpec().getZookeeper().setReplicas(initialZkReplicas), testStorage.getNamespaceName());
 
@@ -560,7 +560,7 @@ class RollingUpdateST extends AbstractST {
         ClientUtils.waitForInstantClientSuccess(testStorage);
 
         //Test that the second pod has event 'Killing'
-        assertThat(kubeClient(testStorage.getNamespaceName()).listEventsByResourceUid(uid), hasAllOfReasons(Killing));
+        assertThat(kubeClient().listEventsByResourceUid(testStorage.getNamespaceName(), uid), hasAllOfReasons(Killing));
     }
 
     @ParallelNamespaceTest
@@ -640,12 +640,12 @@ class RollingUpdateST extends AbstractST {
         }, Environment.TEST_SUITE_NAMESPACE);
 
         TestUtils.waitFor("rolling update starts", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_STATUS_TIMEOUT,
-            () -> kubeClient(Environment.TEST_SUITE_NAMESPACE).listPods(Environment.TEST_SUITE_NAMESPACE).stream().filter(pod -> pod.getStatus().getPhase().equals("Running"))
+            () -> kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE).stream().filter(pod -> pod.getStatus().getPhase().equals("Running"))
                     .map(pod -> pod.getStatus().getPhase()).toList().size() < kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE).size());
 
         LabelSelector coLabelSelector = kubeClient().getDeployment(clusterOperator.getDeploymentNamespace(), ResourceManager.getCoDeploymentName()).getSpec().getSelector();
         LOGGER.info("Deleting Cluster Operator Pod with labels {}", coLabelSelector);
-        kubeClient(clusterOperator.getDeploymentNamespace()).deletePodsByLabelSelector(coLabelSelector);
+        kubeClient().deletePodsByLabelSelector(clusterOperator.getDeploymentNamespace(), coLabelSelector);
         LOGGER.info("Cluster Operator Pod deleted");
 
         LOGGER.info("Rolling Update is taking place, starting with roll of Zookeeper Pods with labels {}", testStorage.getControllerSelector());
@@ -655,7 +655,7 @@ class RollingUpdateST extends AbstractST {
         RollingUpdateUtils.waitTillComponentHasStartedRolling(Environment.TEST_SUITE_NAMESPACE, testStorage.getBrokerSelector(), brokerPods);
 
         LOGGER.info("Deleting Cluster Operator Pod with labels {}, while Rolling update rolls Kafka Pods", coLabelSelector);
-        kubeClient(clusterOperator.getDeploymentNamespace()).deletePodsByLabelSelector(coLabelSelector);
+        kubeClient().deletePodsByLabelSelector(clusterOperator.getDeploymentNamespace(), coLabelSelector);
         LOGGER.info("Cluster Operator Pod deleted");
 
         LOGGER.info("Wait until Rolling Update finish successfully despite Cluster Operator being deleted in beginning of Rolling Update and also during Kafka Pods rolling");

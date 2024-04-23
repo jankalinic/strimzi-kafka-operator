@@ -100,7 +100,7 @@ public class TopicST extends AbstractST {
         assertThat(kafkaTopicStatus.getConditions().get(0).getReason(), containsString("KafkaError"));
 
         LOGGER.info("Delete Topic: {}", testStorage.getTopicName());
-        cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).deleteByName("kafkatopic", testStorage.getTopicName());
+        cmdKubeClient().deleteByName(Environment.TEST_SUITE_NAMESPACE, KafkaTopic.RESOURCE_SINGULAR, testStorage.getTopicName());
         KafkaTopicUtils.waitForKafkaTopicDeletion(Environment.TEST_SUITE_NAMESPACE, testStorage.getTopicName());
 
         topicReplicationFactor = 3;
@@ -165,7 +165,7 @@ public class TopicST extends AbstractST {
             Thread.sleep(2_000);
 
             LOGGER.info("Iteration {}: Deleting {}", i, testStorage.getTopicName());
-            cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).deleteByName(KafkaTopic.RESOURCE_KIND, testStorage.getTopicName());
+            cmdKubeClient().deleteByName(Environment.TEST_SUITE_NAMESPACE, KafkaTopic.RESOURCE_KIND, testStorage.getTopicName());
             KafkaTopicUtils.waitForKafkaTopicDeletion(Environment.TEST_SUITE_NAMESPACE, testStorage.getTopicName());
 
             assertThat(adminClient.listTopics(), not(containsString(testStorage.getTopicName())));
@@ -296,9 +296,9 @@ public class TopicST extends AbstractST {
         assertThat("Topic exists in Kafka itself", hasTopicInKafka(newTopicName, sharedTestStorage.getClusterName(), scraperPodName));
         assertThat("Topic exists in Kafka CR (Kubernetes)", hasTopicInCRK8s(newKafkaTopic, newTopicName));
 
-        cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).deleteByName(KafkaTopic.RESOURCE_SINGULAR, topicName);
+        cmdKubeClient().deleteByName(Environment.TEST_SUITE_NAMESPACE, KafkaTopic.RESOURCE_SINGULAR, topicName);
         KafkaTopicUtils.waitForKafkaTopicDeletion(Environment.TEST_SUITE_NAMESPACE, topicName);
-        cmdKubeClient(Environment.TEST_SUITE_NAMESPACE).deleteByName(KafkaTopic.RESOURCE_SINGULAR, newTopicName);
+        cmdKubeClient().deleteByName(Environment.TEST_SUITE_NAMESPACE, KafkaTopic.RESOURCE_SINGULAR, newTopicName);
         KafkaTopicUtils.waitForKafkaTopicDeletion(Environment.TEST_SUITE_NAMESPACE, newTopicName);
     }
 
@@ -349,7 +349,7 @@ public class TopicST extends AbstractST {
         KafkaTopicUtils.waitForKafkaTopicReady(Environment.TEST_SUITE_NAMESPACE, testStorage.getTopicName());
 
         LOGGER.info("Found the following Topics:");
-        cmdKubeClient().list(KafkaTopic.RESOURCE_KIND).forEach(item -> {
+        cmdKubeClient().list(Environment.TEST_SUITE_NAMESPACE, KafkaTopic.RESOURCE_KIND).forEach(item -> {
             LOGGER.info("{}: {}", KafkaTopic.RESOURCE_KIND, item);
         });
 
@@ -494,7 +494,7 @@ public class TopicST extends AbstractST {
                 .endSpec().build()
         );
 
-        final String scraperPodName = kubeClient().listPodsByPrefixInName(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
+        final String scraperPodName = kubeClient().listPodsInNamespaceWithPrefix(testStorage.getNamespaceName(), testStorage.getScraperName()).get(0).getMetadata().getName();
 
         LOGGER.info("Creating KafkaTopic: {}/{} in without any label", testStorage.getNamespaceName(), testStorage.getTargetTopicName());
         resourceManager.createResourceWithoutWait(KafkaTopicTemplates.topic(testStorage.getClusterName(), testStorage.getTargetTopicName(), 1, 1, 1, testStorage.getNamespaceName())
@@ -505,18 +505,18 @@ public class TopicST extends AbstractST {
 
         // Checking that resource was created
         LOGGER.info("Verifying presence of KafkaTopic: {}/{}", testStorage.getNamespaceName(), testStorage.getTargetTopicName());
-        assertThat(cmdKubeClient(testStorage.getNamespaceName()).list("kafkatopic"), hasItems(testStorage.getTargetTopicName()));
+        assertThat(cmdKubeClient().list(testStorage.getNamespaceName(), KafkaTopic.RESOURCE_SINGULAR), hasItems(testStorage.getTargetTopicName()));
 
         // Checking that TO didn't handle new topic and zk pods don't contain new topic
         KafkaTopicUtils.verifyUnchangedTopicAbsence(testStorage.getNamespaceName(), scraperPodName, testStorage.getClusterName(), testStorage.getTargetTopicName(), topicOperatorReconciliationSeconds);
 
         // Checking TO logs
-        String tOPodName = cmdKubeClient(testStorage.getNamespaceName()).listResourcesByLabel("pod", Labels.STRIMZI_NAME_LABEL + "=" + testStorage.getClusterName() + "-entity-operator").get(0);
-        String tOlogs = kubeClient(testStorage.getNamespaceName()).logsInSpecificNamespace(testStorage.getNamespaceName(), tOPodName, "topic-operator");
+        String tOPodName = cmdKubeClient().listResourcesByLabel(testStorage.getNamespaceName(), "pod", Labels.STRIMZI_NAME_LABEL + "=" + testStorage.getClusterName() + "-entity-operator").get(0);
+        String tOlogs = kubeClient().getLogsInSpecificNamespace(testStorage.getNamespaceName(), tOPodName, "topic-operator");
         assertThat(tOlogs, not(containsString(String.format("Created topic '%s'", testStorage.getTargetTopicName()))));
 
         //Deleting topic
-        cmdKubeClient(testStorage.getNamespaceName()).deleteByName("kafkatopic", testStorage.getTargetTopicName());
+        cmdKubeClient().deleteByName(testStorage.getNamespaceName(), KafkaTopic.RESOURCE_SINGULAR, testStorage.getTargetTopicName());
         KafkaTopicUtils.waitForKafkaTopicDeletion(testStorage.getNamespaceName(),  testStorage.getTargetTopicName());
 
         //Checking KafkaTopic is not present inside Kafka cluster

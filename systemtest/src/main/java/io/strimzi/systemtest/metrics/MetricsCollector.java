@@ -292,7 +292,7 @@ public class MetricsCollector {
      * @return collected metrics
      */
     private String collectMetrics(String metricsPodIp, String podName) throws InterruptedException, ExecutionException, IOException {
-        List<String> executableCommand = Arrays.asList(cmdKubeClient(namespaceName).toString(), "exec", scraperPodName,
+        List<String> executableCommand = Arrays.asList(cmdKubeClient().toString(), "exec", scraperPodName,
             "-n", namespaceName,
             "--", "curl", metricsPodIp + ":" + metricsPort + metricsPath);
 
@@ -334,7 +334,7 @@ public class MetricsCollector {
 
     public Map<String, String> collectMetricsFromPodsWithoutWait() {
         Map<String, String> map = new HashMap<>();
-        kubeClient(namespaceName).listPods(namespaceName, componentLabelSelector).forEach(p -> {
+        kubeClient().listPods(namespaceName, componentLabelSelector).forEach(p -> {
             try {
                 final String podName = p.getMetadata().getName();
                 String podIP = p.getStatus().getPodIP();

@@ -33,7 +33,7 @@ public class JobUtils {
      * @param namespace Delete all jobs in this namespace
      */
     public static void removeAllJobs(String namespace) {
-        kubeClient().namespace(namespace).getJobList().getItems().forEach(
+        kubeClient().getJobList(namespace).getItems().forEach(
             job -> JobUtils.deleteJobWithWait(namespace, job.getMetadata().getName()));
     }
 
@@ -44,7 +44,7 @@ public class JobUtils {
     public static void waitForJobDeletion(final String namespaceName, String name) {
         LOGGER.debug("Waiting for Job: {}/{} deletion", namespaceName, name);
         TestUtils.waitFor("deletion of Job: " + namespaceName + "/" + name, TestConstants.POLL_INTERVAL_FOR_RESOURCE_DELETION, DELETION_TIMEOUT,
-            () -> kubeClient(namespaceName).listPodNamesInSpecificNamespace(namespaceName, "job-name", name).isEmpty());
+            () -> kubeClient().listPodNamesInSpecificNamespace(namespaceName, "job-name", name).isEmpty());
         LOGGER.debug("Job: {}/{} was deleted", namespaceName, name);
     }
 
@@ -54,7 +54,7 @@ public class JobUtils {
      * @param namespace name of the Namespace
      */
     public static void deleteJobWithWait(String namespace, String name) {
-        kubeClient(namespace).deleteJob(namespace, name);
+        kubeClient().deleteJob(namespace, name);
         waitForJobDeletion(namespace, name);
     }
 
@@ -89,7 +89,7 @@ public class JobUtils {
         LOGGER.info("Waiting for Job: {}/{} to be in active state", namespace, jobName);
         TestUtils.waitFor("Job: " + namespace + "/" + jobName + " to be in active state", TestConstants.GLOBAL_POLL_INTERVAL, ResourceOperation.getTimeoutForResourceReadiness(TestConstants.JOB),
             () -> {
-                JobStatus jb = kubeClient().namespace(namespace).getJobStatus(jobName);
+                JobStatus jb = kubeClient().getJobStatus(namespace, jobName);
                 return jb.getActive() > 0;
             });
 
@@ -132,7 +132,7 @@ public class JobUtils {
 
             log.add("\n\nPods with conditions and messages:\n\n");
 
-            for (Pod pod : kubeClient().namespace(currentJob.getMetadata().getNamespace()).listPodsByPrefixInName(jobName)) {
+            for (Pod pod : kubeClient().listPodsInNamespaceWithPrefix(currentJob.getMetadata().getNamespace(), jobName)) {
                 log.add(pod.getMetadata().getName() + ":");
                 List<String> podConditions = new ArrayList<>();
 

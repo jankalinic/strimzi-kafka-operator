@@ -35,7 +35,8 @@ public class KeycloakUtils {
         final String testSuiteScraperPodName = ResourceManager.kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, SCRAPER_SELECTOR).get(0).getMetadata().getName();
 
         return new JsonObject(
-            cmdKubeClient(keycloakNamespace).execInPod(
+            cmdKubeClient().execInPod(
+                keycloakNamespace,
                 testSuiteScraperPodName,
                 "curl",
                 "-v",
@@ -58,7 +59,8 @@ public class KeycloakUtils {
     public static JsonObject getKeycloakRealm(String namespaceName, String baseURI, String token, String desiredRealm) {
         final String testSuiteScraperPodName = ResourceManager.kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, SCRAPER_SELECTOR).get(0).getMetadata().getName();
 
-        return new JsonObject(cmdKubeClient(namespaceName).execInPod(
+        return new JsonObject(cmdKubeClient().execInPod(
+            namespaceName,
             testSuiteScraperPodName,
             "curl",
             "-v",
@@ -81,7 +83,8 @@ public class KeycloakUtils {
     public static JsonArray getKeycloakRealmClients(String namespaceName, String baseURI, String token, String desiredRealm) {
         final String testSuiteScraperPodName = ResourceManager.kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, SCRAPER_SELECTOR).get(0).getMetadata().getName();
 
-        return new JsonArray(cmdKubeClient(namespaceName).execInPod(
+        return new JsonArray(cmdKubeClient().execInPod(
+            namespaceName,
             testSuiteScraperPodName,
             "curl",
             "-v",
@@ -119,8 +122,9 @@ public class KeycloakUtils {
     private static JsonArray getConfigFromResourceServerOfRealm(String namespaceName, String baseURI, String token, String desiredRealm, String clientId, String endpoint) {
         final String testSuiteScraperPodName = ResourceManager.kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, SCRAPER_SELECTOR).get(0).getMetadata().getName();
 
-        return new JsonArray(cmdKubeClient(namespaceName).execInPod(
-                testSuiteScraperPodName,
+        return new JsonArray(cmdKubeClient().execInPod(
+            namespaceName,
+            testSuiteScraperPodName,
             "curl",
             "-v",
             "--insecure",
@@ -143,8 +147,9 @@ public class KeycloakUtils {
     public static String putConfigurationToRealm(String namespaceName, String baseURI, String token, JsonObject config, String desiredRealm) {
         final String testSuiteScraperPodName = ResourceManager.kubeClient().listPods(Environment.TEST_SUITE_NAMESPACE, SCRAPER_SELECTOR).get(0).getMetadata().getName();
 
-        return cmdKubeClient(namespaceName).execInPod(
-                testSuiteScraperPodName,
+        return cmdKubeClient().execInPod(
+            namespaceName,
+            testSuiteScraperPodName,
             "curl",
             "-v",
             "--insecure",
@@ -168,9 +173,10 @@ public class KeycloakUtils {
      * @return response from server
      */
     public static String updatePolicyOfRealmClient(String namespaceName, String baseURI, String token, JsonObject policy, String desiredRealm, String clientId) {
-        final String testSuiteScraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(Environment.TEST_SUITE_NAMESPACE, TestConstants.SCRAPER_NAME).get(0).getMetadata().getName();
+        final String testSuiteScraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(Environment.TEST_SUITE_NAMESPACE, TestConstants.SCRAPER_NAME).get(0).getMetadata().getName();
 
-        return cmdKubeClient(namespaceName).execInPod(
+        return cmdKubeClient().execInPod(
+            namespaceName,
             testSuiteScraperPodName,
             "curl",
             "-v",
@@ -193,9 +199,9 @@ public class KeycloakUtils {
      * @return result of creation
      */
     public static String importRealm(String namespaceName, String baseURI, String token, String realmData) {
-        final String testSuiteScraperPodName = ResourceManager.kubeClient().listPodsByPrefixInName(Environment.TEST_SUITE_NAMESPACE, TestConstants.SCRAPER_NAME).get(0).getMetadata().getName();
+        final String testSuiteScraperPodName = ResourceManager.kubeClient().listPodsInNamespaceWithPrefix(Environment.TEST_SUITE_NAMESPACE, TestConstants.SCRAPER_NAME).get(0).getMetadata().getName();
 
-        return cmdKubeClient(namespaceName).execInPod(
+        return cmdKubeClient().execInPod(
                 testSuiteScraperPodName,
                 "curl",
                 "--insecure",

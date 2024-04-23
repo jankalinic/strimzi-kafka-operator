@@ -49,10 +49,10 @@ public class DeploymentUtils {
                 log.add("\tMessage: " + deploymentCondition.getMessage() + "\n");
             }
 
-            if (kubeClient(namespaceName).listPodsByPrefixInName(name).size() != 0) {
+            if (kubeClient().listPodsInNamespaceWithPrefix(namespaceName, name).size() != 0) {
                 log.add("\nPods with conditions and messages:\n\n");
 
-                for (Pod pod : kubeClient(namespaceName).listPodsByPrefixInName(name)) {
+                for (Pod pod : kubeClient().listPodsInNamespaceWithPrefix(namespaceName, name)) {
                     log.add(pod.getMetadata().getName() + ":");
                     for (PodCondition podCondition : pod.getStatus().getConditions()) {
                         if (podCondition.getMessage() != null) {
@@ -93,7 +93,7 @@ public class DeploymentUtils {
      * @return A map of pod name to resource version for Pods in the given Deployment.
      */
     public static Map<String, String> depSnapshot(String namespaceName, String name) {
-        Deployment deployment = kubeClient(namespaceName).getDeployment(namespaceName, name);
+        Deployment deployment = kubeClient().getDeployment(namespaceName, name);
         LabelSelector selector = deployment.getSpec().getSelector();
         return PodUtils.podSnapshot(namespaceName, selector);
     }
@@ -107,7 +107,7 @@ public class DeploymentUtils {
      */
     public static boolean depHasRolled(String namespaceName, String name, Map<String, String> snapshot) {
         LOGGER.debug("Existing snapshot: {}/{}", namespaceName, new TreeMap<>(snapshot));
-        Map<String, String> map = PodUtils.podSnapshot(namespaceName, kubeClient(namespaceName).getDeployment(namespaceName, name).getSpec().getSelector());
+        Map<String, String> map = PodUtils.podSnapshot(namespaceName, kubeClient().getDeployment(namespaceName, name).getSpec().getSelector());
         LOGGER.debug("Current  snapshot: {}/{}", namespaceName, new TreeMap<>(map));
         int current = map.size();
         map.keySet().retainAll(snapshot.keySet());
@@ -161,7 +161,7 @@ public class DeploymentUtils {
 
         TestUtils.waitFor("readiness of Deployment: " + namespaceName + "/" + deploymentName,
             TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, READINESS_TIMEOUT,
-            () -> kubeClient(namespaceName).getDeploymentStatus(namespaceName, deploymentName),
+            () -> kubeClient().getDeploymentStatus(namespaceName, deploymentName),
             () -> DeploymentUtils.logCurrentDeploymentStatus(kubeClient().getDeployment(namespaceName, deploymentName), namespaceName));
 
         LOGGER.info("Deployment: {}/{} is ready", namespaceName, deploymentName);
@@ -178,8 +178,8 @@ public class DeploymentUtils {
         waitForDeploymentReady(namespaceName, deploymentName);
 
         LOGGER.info("Waiting for {} Pod(s) of Deployment: {}/{} to be ready", expectPods, namespaceName, deploymentName);
-        PodUtils.waitForPodsReady(namespaceName, kubeClient(namespaceName).getDeploymentSelectors(namespaceName, deploymentName), expectPods, true,
-            () -> DeploymentUtils.logCurrentDeploymentStatus(kubeClient(namespaceName).getDeployment(namespaceName, deploymentName), namespaceName));
+        PodUtils.waitForPodsReady(namespaceName, kubeClient().getDeploymentSelectors(namespaceName, deploymentName), expectPods, true,
+            () -> DeploymentUtils.logCurrentDeploymentStatus(kubeClient().getDeployment(namespaceName, deploymentName), namespaceName));
         LOGGER.info("Deployment: {}/{} is ready", namespaceName, deploymentName);
         return true;
     }
@@ -193,11 +193,11 @@ public class DeploymentUtils {
         LOGGER.debug("Waiting for Deployment: {}/{} deletion", namespaceName, name);
         TestUtils.waitFor("deletion of Deployment: " + namespaceName + "/" + name, TestConstants.POLL_INTERVAL_FOR_RESOURCE_DELETION, DELETION_TIMEOUT,
             () -> {
-                if (kubeClient(namespaceName).getDeployment(namespaceName, name) == null) {
+                if (kubeClient().getDeployment(namespaceName, name) == null) {
                     return true;
                 } else {
                     LOGGER.warn("Deployment: {}/{} is not deleted yet! Triggering force delete by cmd client!", namespaceName, name);
-                    cmdKubeClient(namespaceName).deleteByName(TestConstants.DEPLOYMENT, name);
+                    cmdKubeClient().deleteByName(namespaceName, TestConstants.DEPLOYMENT, name);
                     return false;
                 }
             });

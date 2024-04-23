@@ -84,7 +84,7 @@ public class KRaftStrimziDowngradeST extends AbstractKRaftUpgradeST {
         logPodImages(TestConstants.CO_NAMESPACE);
 
         // Downgrade kafka
-        changeKafkaAndMetadataVersion(downgradeData);
+        changeKafkaAndMetadataVersion(TestConstants.CO_NAMESPACE, downgradeData);
 
         // Verify that pods are stable
         PodUtils.verifyThatRunningPodsAreStable(TestConstants.CO_NAMESPACE, clusterName);

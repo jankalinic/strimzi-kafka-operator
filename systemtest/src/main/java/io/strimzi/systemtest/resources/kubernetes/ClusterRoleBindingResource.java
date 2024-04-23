@@ -10,7 +10,6 @@ import io.strimzi.systemtest.TestConstants;
 import io.strimzi.systemtest.resources.ResourceManager;
 import io.strimzi.systemtest.resources.ResourceType;
 import io.strimzi.test.TestUtils;
-import io.strimzi.test.k8s.KubeClusterResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,21 +26,21 @@ public class ClusterRoleBindingResource implements ResourceType<ClusterRoleBindi
     @Override
     public ClusterRoleBinding get(String namespace, String name) {
         // ClusterRoleBinding his operation namespace is only 'default'
-        return kubeClient(KubeClusterResource.getInstance().defaultNamespace()).getClusterRoleBinding(name);
+        return kubeClient().getClusterRoleBinding(name);
     }
     @Override
     public void create(ClusterRoleBinding resource) {
-        kubeClient(KubeClusterResource.getInstance().defaultNamespace()).createOrUpdateClusterRoleBinding(resource);
+        kubeClient().createOrUpdateClusterRoleBinding(resource);
     }
     @Override
     public void delete(ClusterRoleBinding resource) {
         // ClusterRoleBinding his operation namespace is only 'default'
-        kubeClient(KubeClusterResource.getInstance().defaultNamespace()).deleteClusterRoleBinding(resource);
+        kubeClient().deleteClusterRoleBinding(resource);
     }
 
     @Override
     public void update(ClusterRoleBinding resource) {
-        kubeClient(KubeClusterResource.getInstance().defaultNamespace()).createOrUpdateClusterRoleBinding(resource);
+        kubeClient().createOrUpdateClusterRoleBinding(resource);
     }
 
     @Override

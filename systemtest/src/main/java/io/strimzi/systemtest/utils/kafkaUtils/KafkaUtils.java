@@ -134,7 +134,7 @@ public class KafkaUtils {
             String zookeeperPort = String.valueOf(12181);
             waitFor("mntr", pollMs, timeoutMs, () -> {
                     try {
-                        String output = cmdKubeClient(namespaceName).execInPod(zookeeperPod,
+                        String output = cmdKubeClient().execInPod(namespaceName, zookeeperPod,
                             "/bin/bash", "-c", "echo mntr | nc localhost " + zookeeperPort).out();
 
                         if (pattern.matcher(output).find()) {
@@ -148,7 +148,7 @@ public class KafkaUtils {
                 () -> LOGGER.info("ZooKeeper `mntr` output at the point of timeout does not match {}:{}{}",
                     pattern.pattern(),
                     System.lineSeparator(),
-                    indent(cmdKubeClient(namespaceName).execInPod(zookeeperPod, "/bin/bash", "-c", "echo mntr | nc localhost " + zookeeperPort).out()))
+                    indent(cmdKubeClient().execInPod(namespaceName, zookeeperPod, "/bin/bash", "-c", "echo mntr | nc localhost " + zookeeperPort).out()))
             );
         }
     }
@@ -167,7 +167,7 @@ public class KafkaUtils {
 
     public static String getKafkaSecretCertificates(String namespaceName, String secretName, String certType) {
         String secretCerts = "";
-        secretCerts = kubeClient(namespaceName).getSecret(namespaceName, secretName).getData().get(certType);
+        secretCerts = kubeClient().getSecret(namespaceName, secretName).getData().get(certType);
         return Util.decodeFromBase64(secretCerts, Charset.defaultCharset());
     }
 
@@ -301,7 +301,7 @@ public class KafkaUtils {
      */
     public synchronized static boolean verifyPodDynamicConfiguration(final String namespaceName, String scraperPodName, String bootstrapServer, String kafkaPodNamePrefix, String brokerConfigName, Object value) {
 
-        List<Pod> brokerPods = kubeClient().listPodsByPrefixInName(namespaceName, kafkaPodNamePrefix);
+        List<Pod> brokerPods = kubeClient().listPodsInNamespaceWithPrefix(namespaceName, kafkaPodNamePrefix);
         int[] brokerId = {0};
 
         for (Pod pod : brokerPods) {
@@ -424,10 +424,10 @@ public class KafkaUtils {
                 if (KafkaResource.kafkaClient().inNamespace(namespaceName).withName(kafkaClusterName).get() == null &&
                     StrimziPodSetResource.strimziPodSetClient().inNamespace(namespaceName).withName(KafkaResources.kafkaComponentName(kafkaClusterName)).get() == null  &&
                     StrimziPodSetResource.strimziPodSetClient().inNamespace(namespaceName).withName(KafkaResources.zookeeperComponentName(kafkaClusterName)).get() == null  &&
-                    kubeClient(namespaceName).getDeployment(namespaceName, KafkaResources.entityOperatorDeploymentName(kafkaClusterName)) == null) {
+                    kubeClient().getDeployment(namespaceName, KafkaResources.entityOperatorDeploymentName(kafkaClusterName)) == null) {
                     return true;
                 } else {
-                    cmdKubeClient(namespaceName).deleteByName(Kafka.RESOURCE_KIND, kafkaClusterName);
+                    cmdKubeClient().deleteByName(namespaceName, Kafka.RESOURCE_KIND, kafkaClusterName);
                     return false;
                 }
             },
@@ -588,7 +588,7 @@ public class KafkaUtils {
     }
 
     public static String getKafkaLogFolderNameInPod(String namespaceName, String kafkaPodName) {
-        return ResourceManager.cmdKubeClient().namespace(namespaceName)
-            .execInPod(kafkaPodName, "/bin/bash", "-c", "ls /var/lib/kafka/data | grep \"kafka-log[0-9]\\+\" -o").out().trim();
+        return ResourceManager.cmdKubeClient()
+            .execInPod(namespaceName, kafkaPodName, "/bin/bash", "-c", "ls /var/lib/kafka/data | grep \"kafka-log[0-9]\\+\" -o").out().trim();
     }
 }

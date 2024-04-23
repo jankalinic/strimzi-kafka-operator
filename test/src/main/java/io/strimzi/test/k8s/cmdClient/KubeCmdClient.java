@@ -25,59 +25,78 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
 
     String defaultNamespace();
 
-    /** Deletes the resources by resource name. */
-    K deleteByName(String resourceType, String resourceName);
-
-    K deleteAllByResource(String resourceType);
-
     KubeCmdClient<K> namespace(String namespace);
 
     /** Returns namespace for cluster */
     String namespace();
 
     /** Creates the resources in the given files. */
-    K create(File... files);
+    K create(String namespace, File... files);
 
-    default K create(File file) {
-        return create(file, true);
+    default K create(String namespaceName, File file) {
+        return create(namespaceName, file, true);
     }
 
-    K create(File file, boolean localValidation);
+    K create(String namespaceName, File file, boolean localValidation);
+    default K create(File file, boolean localValidation) {
+        return create("", file, localValidation);
+    }
+
+    default K create(String namespaceName, String filePath) {
+        return create(namespaceName, asList(filePath).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    }
+
+    default K createFromFile(String filePath) {
+        return create("", filePath);
+    }
 
     /** Creates the resources in the given files. */
-    K apply(File... files);
+    K apply(String namespaceName, File... files);
+
+    default K apply(String namespaceName, String... files) {
+        return apply(namespaceName, asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    }
 
     /** Deletes the resources in the given files. */
-    K delete(File... files);
+    K delete(String namespaceName, File... files);
 
-    K createOrReplace(File file);
-
-    default K create(String... files) {
-        return create(asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    default K delete(File... files) {
+        return delete("", files);
     }
 
-    default K replace(String... files) {
-        return replace(asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    default K delete(String namespaceName, String... files) {
+        return delete(namespaceName, asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
     }
 
-    default K apply(String... files) {
-        return apply(asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    default K deleteFromFile(String... files) {
+        return delete("", files);
     }
 
-    default K delete(String... files) {
-        return delete(asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
-    }
+    /** Deletes the resources by resource name. */
+    K deleteByName(String namespaceName, String resourceType, String resourceName);
+
+    K deleteAllByResource(String namespaceName, String resourceType);
 
     /** Replaces the resources in the given files. */
-    K replace(File... files);
+    K replace(String namespaceName, File... files);
+
+    default K replace(String namespaceName, String... files) {
+        return replace(namespaceName, asList(files).stream().map(File::new).collect(toList()).toArray(new File[0]));
+    }
+
+    K createOrReplace(String namespaceName, File file);
 
     K applyContent(String yamlContent);
 
+    K applyContent(String namespaceName, String yamlContent);
+
     K createContent(String yamlContent);
 
-    K replaceContent(String yamlContent);
+    K replaceContent(String namespaceName, String yamlContent);
 
     K deleteContent(String yamlContent);
+
+    K deleteContent(String namespaceName, String yamlContent);
 
     K createNamespace(String name);
 
@@ -92,6 +111,7 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @return          This kube client
      */
     K scaleByName(String kind, String name, int replicas);
+    K scaleByName(String namespaceName, String kind, String name, int replicas);
 
     /**
      * Execute the given {@code command} in the given {@code pod}.
@@ -99,17 +119,17 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @param command The command
      * @return The process result.
      */
-    ExecResult execInPod(String pod, String... command);
+    ExecResult execInPod(String namespaceName, String pod, String... command);
 
-    ExecResult execInPod(String pod, boolean throwErrors, String... command);
+    ExecResult execInPod(String namespaceName, String pod, boolean throwErrors, String... command);
 
-    ExecResult execInPod(Level logLevel, String pod, String... command);
+    ExecResult execInPod(String namespaceName, Level logLevel, String pod, String... command);
 
-    ExecResult execInPod(Level logLevel, String pod, boolean throwErrors, String... command);
+    ExecResult execInPod(String namespaceName, Level logLevel, String pod, boolean throwErrors, String... command);
 
-    ExecResult execInCurrentNamespace(String... commands);
+    ExecResult execInNamespace(String namespaceName, String... commands);
 
-    ExecResult execInCurrentNamespace(Level logLevel, String... commands);
+    ExecResult execInNamespace(String namespaceName, Level logLevel, String... commands);
 
     /**
      * Execute the given {@code command} in the given {@code container} which is deployed in {@code pod}.
@@ -118,9 +138,9 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @param command The command
      * @return The process result.
      */
-    ExecResult execInPodContainer(String pod, String container, String... command);
+    ExecResult execInPodContainer(String namespaceName, String pod, String container, String... command);
 
-    ExecResult execInPodContainer(Level logLevel, String pod, String container, String... command);
+    ExecResult execInPodContainer(String namespaceName, Level logLevel, String pod, String container, String... command);
 
     /**
      * Execute the given {@code command}.
@@ -170,6 +190,7 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @return This kube client.
      */
     K waitFor(String resource, String name, Predicate<JsonNode> condition);
+    K waitFor(String namespaceName, String resource, String name, Predicate<JsonNode> condition);
 
     /**
      * Wait for the resource with the given {@code name} to be created.
@@ -178,40 +199,43 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @return This kube client.
      */
     K waitForResourceCreation(String resourceType, String resourceName);
+    K waitForResourceCreation(String namespaceName, String resourceType, String resourceName);
 
     /**
      * Get the content of the given {@code resource} with the given {@code name} as YAML.
+     * @param namespaceName The name of namespace.
      * @param resource The type of resource (e.g. "cm").
      * @param resourceName The name of the resource.
      * @return The resource YAML.
      */
-    String get(String resource, String resourceName);
+    String get(String namespaceName, String resource, String resourceName);
 
     /**
      * Get a list of events in a given namespace
      * @return List of events
      */
-    String getEvents();
+    String getEvents(String namespaceName);
 
+    K waitForResourceDeletion(String namespaceName, String resourceType, String resourceName);
     K waitForResourceDeletion(String resourceType, String resourceName);
 
-    List<String> list(String resourceType);
+    List<String> list(String namespaceName, String resourceType);
 
-    String getResourceAsYaml(String resourceType, String resourceName);
+    String getResourceAsYaml(String namespaceName, String resourceType, String resourceName);
 
-    String getResources(String resourceType);
+    String getResources(String namespaceName, String resourceType);
 
-    String getResourcesAsYaml(String resourceType);
+    String getResourcesAsYaml(String namespaceName, String resourceType);
 
-    void createResourceAndApply(String template, Map<String, String> params);
+    void createResourceAndApply(String namespaceName, String template, Map<String, String> params);
 
-    String describe(String resourceType, String resourceName);
+    String describe(String namespaceName, String resourceType, String resourceName);
 
-    default String logs(String pod) {
-        return logs(pod, null);
+    default String logs(String namespaceName, String pod) {
+        return logs(namespaceName, pod, null);
     }
 
-    String logs(String pod, String container);
+    String logs(String namespaceName, String pod, String container);
 
     /**
      * @param resourceType The type of resource
@@ -220,7 +244,7 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @param grepPattern Grep patterns for search
      * @return Grep result as string
      */
-    String searchInLog(String resourceType, String resourceName, long sinceSeconds, String... grepPattern);
+    String searchInLog(String namespaceName, String resourceType, String resourceName, long sinceSeconds, String... grepPattern);
 
     /**
      * @param resourceType The type of resource
@@ -230,21 +254,21 @@ public interface KubeCmdClient<K extends KubeCmdClient<K>> {
      * @param grepPattern Grep patterns for search
      * @return Grep result as string
      */
-    String searchInLog(String resourceType, String resourceName, String resourceContainer, long sinceSeconds, String... grepPattern);
+    String searchInLog(String namespaceName, String resourceType, String resourceName, String resourceContainer, long sinceSeconds, String... grepPattern);
 
-    String getResourceAsJson(String resourceType, String resourceName);
+    String getResourceAsJson(String namespaceName, String resourceType, String resourceName);
 
-    K waitForResourceUpdate(String resourceType, String resourceName, Date startTime);
+    K waitForResourceUpdate(String namespaceName, String resourceType, String resourceName, Date startTime);
 
-    Date getResourceCreateTimestamp(String pod, String s);
+    Date getResourceCreateTimestamp(String namespaceName, String pod, String s);
 
-    List<String> listResourcesByLabel(String resourceType, String label);
+    List<String> listResourcesByLabel(String namespaceName, String resourceType, String label);
 
     String cmd();
 
-    String getResourceJsonPath(String resourceType, String resourceName, String path);
+    String getResourceJsonPath(String namespaceName, String resourceType, String resourceName, String path);
 
-    boolean getResourceReadiness(String resourceType, String resourceName);
+    boolean getResourceReadiness(String namespaceName, String resourceType, String resourceName);
 
-    void patchResource(String resourceType, String resourceName, String patchPath, String value);
+    void patchResource(String namespaceName, String resourceType, String resourceName, String patchPath, String value);
 }

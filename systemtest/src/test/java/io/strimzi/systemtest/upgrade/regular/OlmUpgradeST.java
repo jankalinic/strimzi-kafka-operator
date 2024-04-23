@@ -78,7 +78,7 @@ public class OlmUpgradeST extends AbstractUpgradeST {
         File kafkaYaml = new File(dir, olmUpgradeData.getFromExamples() + "/examples/kafka/kafka-persistent.yaml");
 
         LOGGER.info("Deploying Kafka from file: {}", kafkaYaml.getPath());
-        KubeClusterResource.cmdKubeClient().create(kafkaYaml);
+        KubeClusterResource.cmdKubeClient().create(TestConstants.CO_NAMESPACE, kafkaYaml);
         waitForReadinessOfKafkaCluster();
 
         // Create KafkaTopic
@@ -112,7 +112,7 @@ public class OlmUpgradeST extends AbstractUpgradeST {
 
         resourceManager.createResourceWithWait(kafkaBasicClientJob.producerStrimzi(), kafkaBasicClientJob.consumerStrimzi());
 
-        String clusterOperatorDeploymentName = ResourceManager.kubeClient().getDeploymentNameByPrefix(Environment.OLM_OPERATOR_DEPLOYMENT_NAME);
+        String clusterOperatorDeploymentName = ResourceManager.kubeClient().getDeploymentNameByPrefix(TestConstants.CO_NAMESPACE, Environment.OLM_OPERATOR_DEPLOYMENT_NAME);
         LOGGER.info("Old deployment name of Cluster Operator is {}", clusterOperatorDeploymentName);
 
         // ======== Cluster Operator upgrade starts ========
@@ -126,7 +126,7 @@ public class OlmUpgradeST extends AbstractUpgradeST {
         // Cluster Operator upgrade
         clusterOperator.upgradeClusterOperator(upgradeOlmConfig);
 
-        clusterOperatorDeploymentName = ResourceManager.kubeClient().getDeploymentNameByPrefix(Environment.OLM_OPERATOR_DEPLOYMENT_NAME);
+        clusterOperatorDeploymentName = ResourceManager.kubeClient().getDeploymentNameByPrefix(TestConstants.CO_NAMESPACE, Environment.OLM_OPERATOR_DEPLOYMENT_NAME);
         LOGGER.info("New deployment name of Cluster Operator is {}", clusterOperatorDeploymentName);
         ResourceManager.setCoDeploymentName(clusterOperatorDeploymentName);
 
@@ -142,7 +142,7 @@ public class OlmUpgradeST extends AbstractUpgradeST {
 
         // ======== Kafka upgrade starts ========
         logPodImages(TestConstants.CO_NAMESPACE);
-        changeKafkaAndLogFormatVersion(olmUpgradeData);
+        changeKafkaAndLogFormatVersion(TestConstants.CO_NAMESPACE, olmUpgradeData);
         logPodImages(TestConstants.CO_NAMESPACE);
         // ======== Kafka upgrade ends ========
 

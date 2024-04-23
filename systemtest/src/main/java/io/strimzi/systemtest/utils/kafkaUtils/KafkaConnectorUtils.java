@@ -77,7 +77,7 @@ public class KafkaConnectorUtils {
     }
 
     public static String getCreatedConnectors(String namespaceName, String connectPodName) {
-        return cmdKubeClient(namespaceName).execInPod(connectPodName, "/bin/bash", "-c",
+        return cmdKubeClient().execInPod(namespaceName, connectPodName, "/bin/bash", "-c",
                 "curl -X GET http://localhost:8083/connectors"
         ).out();
     }
@@ -88,14 +88,14 @@ public class KafkaConnectorUtils {
                 return true;
             } else {
                 LOGGER.info("KafkaConnector: {}/{} is not deleted yet, triggering force delete", namespaceName, connectorName);
-                cmdKubeClient().deleteByName(KafkaConnector.RESOURCE_KIND, connectorName);
+                cmdKubeClient().deleteByName(namespaceName, KafkaConnector.RESOURCE_KIND, connectorName);
                 return false;
             }
         }, () -> ResourceManager.logCurrentResourceStatus(KafkaConnectorResource.kafkaConnectorClient().inNamespace(namespaceName).withName(connectorName).get()));
     }
 
     public static void createFileSinkConnector(String namespaceName, String podName, String topicName, String sinkFileName, String apiUrl) {
-        cmdKubeClient(namespaceName).execInPod(podName, "/bin/bash", "-c",
+        cmdKubeClient().execInPod(namespaceName, podName, "/bin/bash", "-c",
             "curl -X POST -H \"Content-Type: application/json\" " + "--data '{ \"name\": \"sink-test\", " +
                 "\"config\": " + "{ \"connector.class\": \"FileStreamSink\", " +
                 "\"tasks.max\": \"1\", \"topics\": \"" + topicName + "\"," + " \"file\": \"" + sinkFileName + "\" } }' " +
@@ -148,12 +148,12 @@ public class KafkaConnectorUtils {
     }
 
     public static String getConnectorSpecFromConnectAPI(String namespaceName, String podName, String connectorName) {
-        return cmdKubeClient(namespaceName).execInPod(podName, "/bin/bash", "-c",
+        return cmdKubeClient().execInPod(namespaceName, podName, "/bin/bash", "-c",
             "curl http://localhost:8083/connectors/" + connectorName).out();
     }
 
     public static String getConnectorConfig(String namespaceName, String podName, String connectorName, String apiUrl) {
-        return cmdKubeClient(namespaceName).execInPod(podName, "/bin/bash", "-c", "curl http://" + apiUrl + ":8083/connectors/" +
+        return cmdKubeClient().execInPod(namespaceName, podName, "/bin/bash", "-c", "curl http://" + apiUrl + ":8083/connectors/" +
             connectorName + "/config").out();
     }
 
@@ -192,7 +192,7 @@ public class KafkaConnectorUtils {
         TestUtils.waitFor("KafkaConnector's:" + connectorName + " worker to be in state: " + state, TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, TestConstants.GLOBAL_TIMEOUT,
             () -> {
                 JsonObject connectorStatus = new JsonObject(
-                        cmdKubeClient().namespace(namespaceName).execInPod(podName,
+                        cmdKubeClient().execInPod(namespaceName, podName,
                         "curl", "GET",
                         "http://" + KafkaConnectResources.serviceName(connectName) + ":8083/connectors/" + connectorName + "/status").out().trim()
                 );
@@ -205,7 +205,7 @@ public class KafkaConnectorUtils {
         int[] counter = {0};
         TestUtils.waitFor("KafkaConnector logger to be stable", TestConstants.GLOBAL_POLL_INTERVAL, TestConstants.GLOBAL_TIMEOUT,
             () ->  {
-                String logger = cmdKubeClient().namespace(namespaceName).execInPod(podName, "curl",
+                String logger = cmdKubeClient().execInPod(namespaceName, podName, "curl",
                     "http://" + KafkaConnectResources.serviceName(connectClusterName) + ":8083/admin/loggers/" + connectorName).out();
                 if (logger.contains(desiredLogger)) {
                     counter[0]++;

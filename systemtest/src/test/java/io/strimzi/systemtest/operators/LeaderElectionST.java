@@ -108,7 +108,7 @@ public class LeaderElectionST extends AbstractST {
             .createInstallation()
             .runInstallation();
 
-        String coPodName = kubeClient().listPodsByPrefixInName(clusterOperator.getDeploymentNamespace(), clusterOperator.getClusterOperatorName()).get(0).getMetadata().getName();
+        String coPodName = kubeClient().listPodsInNamespaceWithPrefix(clusterOperator.getDeploymentNamespace(), clusterOperator.getClusterOperatorName()).get(0).getMetadata().getName();
         Lease notExistingLease = kubeClient().getClient().leases().inNamespace(clusterOperator.getDeploymentNamespace()).withName(clusterOperator.getClusterOperatorName()).get();
         String logFromCoPod = StUtils.getLogFromPodByTime(clusterOperator.getDeploymentNamespace(), coPodName, clusterOperator.getClusterOperatorName(), "300s");
 

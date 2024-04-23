@@ -34,11 +34,11 @@ public class StatefulSetUtils {
 
         LOGGER.info("Waiting for StatefulSet: {}/{} to be ready", namespaceName, statefulSetName);
         TestUtils.waitFor("readiness of StatefulSet: " + namespaceName + "/" + statefulSetName, TestConstants.POLL_INTERVAL_FOR_RESOURCE_READINESS, timeout,
-            () -> kubeClient(namespaceName).getStatefulSetStatus(namespaceName, statefulSetName),
+            () -> kubeClient().getStatefulSetStatus(namespaceName, statefulSetName),
             () -> ResourceManager.logCurrentResourceStatus(KafkaResource.kafkaClient().inNamespace(namespaceName).withName(resourceName).get()));
 
         LOGGER.info("Waiting for {} Pod(s) of StatefulSet: {}/{} to be ready", expectPods, namespaceName, statefulSetName);
-        PodUtils.waitForPodsReady(namespaceName, kubeClient(namespaceName).getStatefulSetSelectors(namespaceName, statefulSetName), expectPods, true,
+        PodUtils.waitForPodsReady(namespaceName, kubeClient().getStatefulSetSelectors(namespaceName, statefulSetName), expectPods, true,
             () -> ResourceManager.logCurrentResourceStatus(KafkaResource.kafkaClient().inNamespace(namespaceName).withName(resourceName).get()));
         LOGGER.info("StatefulSet: {}/{} is ready", namespaceName, statefulSetName);
     }

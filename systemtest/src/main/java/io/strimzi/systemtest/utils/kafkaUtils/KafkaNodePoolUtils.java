@@ -57,7 +57,7 @@ public class KafkaNodePoolUtils {
                 ) {
                     return true;
                 } else {
-                    cmdKubeClient(namespaceName).deleteByName(KafkaNodePool.RESOURCE_KIND, kafkaNodePoolName);
+                    cmdKubeClient().deleteByName(namespaceName, KafkaNodePool.RESOURCE_KIND, kafkaNodePoolName);
                     return false;
                 }
             },

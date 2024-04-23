@@ -18,7 +18,7 @@ public class ServiceAccountResource implements ResourceType<ServiceAccount> {
     }
     @Override
     public ServiceAccount get(String namespace, String name) {
-        return kubeClient(namespace).getServiceAccount(namespace, name);
+        return kubeClient().getServiceAccount(namespace, name);
     }
     @Override
     public void create(ServiceAccount resource) {

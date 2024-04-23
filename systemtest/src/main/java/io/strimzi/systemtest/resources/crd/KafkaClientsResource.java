@@ -20,22 +20,22 @@ public class KafkaClientsResource implements ResourceType<Deployment> {
     }
     @Override
     public Deployment get(String namespace, String name) {
-        String deploymentName = ResourceManager.kubeClient().namespace(namespace).getDeploymentNameByPrefix(name);
-        return deploymentName != null ?  ResourceManager.kubeClient().namespace(namespace).getDeployment(namespace, deploymentName) : null;
+        String deploymentName = ResourceManager.kubeClient().getDeploymentNameByPrefix(namespace, name);
+        return deploymentName != null ?  ResourceManager.kubeClient().getDeployment(namespace, deploymentName) : null;
     }
 
     @Override
     public void create(Deployment resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createDeployment(resource);
+        ResourceManager.kubeClient().createDeployment(resource);
     }
     @Override
     public void delete(Deployment resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteDeployment(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
+        ResourceManager.kubeClient().deleteDeployment(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
     }
 
     @Override
     public void update(Deployment resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).updateDeployment(resource);
+        ResourceManager.kubeClient().updateDeployment(resource);
     }
 
     @Override

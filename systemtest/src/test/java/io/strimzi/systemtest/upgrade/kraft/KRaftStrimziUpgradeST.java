@@ -97,8 +97,8 @@ public class KRaftStrimziUpgradeST extends AbstractKRaftUpgradeST {
         // Verify upgrade
         verifyProcedure(acrossUpgradeData, testStorage.getContinuousProducerName(), testStorage.getContinuousConsumerName(), TestConstants.CO_NAMESPACE, wasUTOUsedBefore);
 
-        String controllerPodName = kubeClient().listPodsByPrefixInName(TestConstants.CO_NAMESPACE, KafkaResource.getStrimziPodSetName(clusterName, CONTROLLER_NODE_NAME)).get(0).getMetadata().getName();
-        String brokerPodName = kubeClient().listPodsByPrefixInName(TestConstants.CO_NAMESPACE, KafkaResource.getStrimziPodSetName(clusterName, BROKER_NODE_NAME)).get(0).getMetadata().getName();
+        String controllerPodName = kubeClient().listPodsInNamespaceWithPrefix(TestConstants.CO_NAMESPACE, KafkaResource.getStrimziPodSetName(clusterName, CONTROLLER_NODE_NAME)).get(0).getMetadata().getName();
+        String brokerPodName = kubeClient().listPodsInNamespaceWithPrefix(TestConstants.CO_NAMESPACE, KafkaResource.getStrimziPodSetName(clusterName, BROKER_NODE_NAME)).get(0).getMetadata().getName();
 
         assertThat(KafkaUtils.getVersionFromKafkaPodLibs(controllerPodName), containsString(acrossUpgradeData.getProcedures().getVersion()));
         assertThat(KafkaUtils.getVersionFromKafkaPodLibs(brokerPodName), containsString(acrossUpgradeData.getProcedures().getVersion()));
@@ -126,7 +126,7 @@ public class KRaftStrimziUpgradeST extends AbstractKRaftUpgradeST {
         logPodImages(TestConstants.CO_NAMESPACE);
 
         // Upgrade kafka
-        changeKafkaAndMetadataVersion(acrossUpgradeData, true);
+        changeKafkaAndMetadataVersion(TestConstants.CO_NAMESPACE, acrossUpgradeData, true);
 
         logPodImages(TestConstants.CO_NAMESPACE);
 
@@ -161,7 +161,7 @@ public class KRaftStrimziUpgradeST extends AbstractKRaftUpgradeST {
         logPodImages(TestConstants.CO_NAMESPACE);
 
         // Upgrade kafka
-        changeKafkaAndMetadataVersion(acrossUpgradeData);
+        changeKafkaAndMetadataVersion(TestConstants.CO_NAMESPACE, acrossUpgradeData);
 
         logPodImages(TestConstants.CO_NAMESPACE);
 
@@ -206,7 +206,7 @@ public class KRaftStrimziUpgradeST extends AbstractKRaftUpgradeST {
         logPodImages(TestConstants.CO_NAMESPACE);
 
         // Upgrade kafka
-        changeKafkaAndMetadataVersion(upgradeData, true);
+        changeKafkaAndMetadataVersion(TestConstants.CO_NAMESPACE, upgradeData, true);
 
         logPodImages(TestConstants.CO_NAMESPACE);
 

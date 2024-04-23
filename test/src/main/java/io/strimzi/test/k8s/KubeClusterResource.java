@@ -92,24 +92,15 @@ public class KubeClusterResource {
     }
 
     /**
-     * Provides appropriate CMD client for running cluster
+     * Provides appropriate CMD client for running cluster. It requires you to specify the namespace during the operation.
      * @return CMD client
      */
     public static KubeCmdClient<?> cmdKubeClient() {
-        return kubeClusterResource.cmdClient().namespace(kubeClusterResource.getNamespace());
+        return kubeClusterResource.cmdClient();
     }
 
     /**
-     * Provides appropriate CMD client with expected namespace for running cluster
-     * @param inNamespace Namespace will be used as a current namespace for client
-     * @return CMD client with expected namespace in configuration
-     */
-    public static KubeCmdClient<?> cmdKubeClient(String inNamespace) {
-        return kubeClusterResource.cmdClient().namespace(inNamespace);
-    }
-
-    /**
-     * Provides appropriate Kubernetes client for running cluster
+     * Provides appropriate Kubernetes client for running cluster. It requires you to specify the namespace during the operation.
      * @return Kubernetes client
      */
     public static KubeClient kubeClient() {
@@ -122,15 +113,6 @@ public class KubeClusterResource {
      */
     public static HelmClient helmClusterClient() {
         return kubeClusterResource.helmClient().namespace(kubeClusterResource.getNamespace());
-    }
-
-    /**
-     * Provides appropriate Kubernetes client with expected namespace for running cluster
-     * @param inNamespace Namespace will be used as a current namespace for client
-     * @return Kubernetes client with expected namespace in configuration
-     */
-    public static KubeClient kubeClient(String inNamespace) {
-        return kubeClusterResource.client().namespace(inNamespace);
     }
 
     /**
@@ -191,7 +173,7 @@ public class KubeClusterResource {
         for (String resource : resources) {
             LOGGER.info("Replacing resources {} in Namespace {}", resource, getNamespace());
             deploymentResources.add(resource);
-            cmdKubeClient().namespace(getNamespace()).replace(resource);
+            cmdKubeClient().replace(getNamespace(), resource);
         }
     }
 
@@ -206,10 +188,10 @@ public class KubeClusterResource {
             extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).get("NAMESPACE_NAME").toString() :
             getNamespace();
 
-        for (String resource : resources) {
-            LOGGER.info("Creating resources {} in Namespace {}", resource, namespaceName);
-            deploymentResources.add(resource);
-            cmdKubeClient(namespaceName).create(resource);
+        for (String resourcePath : resources) {
+            LOGGER.info("Creating resources {} in Namespace {}", resourcePath, namespaceName);
+            deploymentResources.add(resourcePath);
+            cmdKubeClient().create(namespaceName, resourcePath);
         }
     }
 
@@ -222,7 +204,7 @@ public class KubeClusterResource {
         for (String resource : resources) {
             LOGGER.info("Creating resources {} in Namespace {}", resource, getNamespace());
             deploymentResources.add(resource);
-            cmdKubeClient(getNamespace()).create(resource);
+            cmdKubeClient().create(getNamespace(), resource);
         }
     }
 
@@ -259,7 +241,7 @@ public class KubeClusterResource {
         Collections.reverse(deploymentResources);
         for (String resource : deploymentResources) {
             LOGGER.info("Deleting resources {}", resource);
-            cmdKubeClient().delete(resource);
+            cmdKubeClient().delete("", resource);
         }
         deploymentResources.clear();
     }
@@ -270,7 +252,7 @@ public class KubeClusterResource {
     public void deleteCustomResources(String... resources) {
         for (String resource : resources) {
             LOGGER.info("Deleting resources {}", resource);
-            cmdKubeClient().delete(resource);
+            cmdKubeClient().delete("", resource);
             deploymentResources.remove(resource);
         }
     }
@@ -284,7 +266,7 @@ public class KubeClusterResource {
 
         for (String resource : resources) {
             LOGGER.info("Deleting resources {}", resource);
-            cmdKubeClient(namespaceName).delete(resource);
+            cmdKubeClient().delete(namespaceName, resource);
             deploymentResources.remove(resource);
         }
     }

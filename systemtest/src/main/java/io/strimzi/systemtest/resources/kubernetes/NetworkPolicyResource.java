@@ -41,20 +41,20 @@ public class NetworkPolicyResource implements ResourceType<NetworkPolicy> {
     }
     @Override
     public NetworkPolicy get(String namespace, String name) {
-        return ResourceManager.kubeClient().namespace(namespace).getNetworkPolicy(name);
+        return ResourceManager.kubeClient().getNetworkPolicy(namespace, name);
     }
     @Override
     public void create(NetworkPolicy resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).createNetworkPolicy(resource);
+        ResourceManager.kubeClient().createNetworkPolicy(resource);
     }
     @Override
     public void delete(NetworkPolicy resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).deleteNetworkPolicy(resource.getMetadata().getName());
+        ResourceManager.kubeClient().deleteNetworkPolicy(resource.getMetadata().getNamespace(), resource.getMetadata().getName());
     }
 
     @Override
     public void update(NetworkPolicy resource) {
-        ResourceManager.kubeClient().namespace(resource.getMetadata().getNamespace()).updateNetworkPolicy(resource);
+        ResourceManager.kubeClient().updateNetworkPolicy(resource);
     }
 
     @Override
@@ -220,8 +220,8 @@ public class NetworkPolicyResource implements ResourceType<NetworkPolicy> {
             // otherwise use resource namespace
             resource.getMetadata().getNamespace();
 
-        if (kubeClient(namespaceName).listPods(namespaceName, labelSelector).isEmpty()) {
-            List<String> pods = kubeClient(namespaceName).listPods(namespaceName).stream()
+        if (kubeClient().listPods(namespaceName, labelSelector).isEmpty()) {
+            List<String> pods = kubeClient().listPods(namespaceName).stream()
                 .map(pod -> pod.getMetadata().getName()).toList();
             LOGGER.error("Pods inside Namespace: {} are: {}", namespaceName, pods.toString());
             throw new RuntimeException("You did not create the Scraper instance(pod) before using the " + resource.getKind() + " in namespace:" + namespaceName);

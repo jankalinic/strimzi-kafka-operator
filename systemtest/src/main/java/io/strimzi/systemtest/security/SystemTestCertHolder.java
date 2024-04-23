@@ -85,7 +85,7 @@ public class SystemTestCertHolder {
             //      b) Create the new (custom) secret.
 
             Secret secret = SecretUtils.createSecretFromFile(strimziKeyPKCS8.getAbsolutePath(), "ca.key", this.caKeySecretName, namespaceName, additionalSecretLabels);
-            kubeClient().namespace(namespaceName).createSecret(secret);
+            kubeClient().createSecret(secret);
             SecretUtils.waitForSecretReady(namespaceName, this.caKeySecretName, () -> { });
 
             // 4. Annotate the secrets
@@ -113,7 +113,7 @@ public class SystemTestCertHolder {
             int generationNumber = Integer.parseInt(clusterCaSecretAnnotations.get(annotationKey));
             clusterCaSecretAnnotations.put(annotationKey, String.valueOf(++generationNumber));
         }
-        kubeClient(testStorage.getNamespaceName()).patchSecret(testStorage.getNamespaceName(), secret.getMetadata().getName(), secret);
+        kubeClient().patchSecret(testStorage.getNamespaceName(), secret.getMetadata().getName(), secret);
     }
 
     public SystemTestCertAndKey getStrimziRootCa() {

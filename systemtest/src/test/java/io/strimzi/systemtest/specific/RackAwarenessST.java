@@ -119,8 +119,8 @@ class RackAwarenessST extends AbstractST {
         String podNodeName = pod.getSpec().getNodeName();
         String hostname = podNodeName.contains(".") ? podNodeName.substring(0, podNodeName.indexOf(".")) : podNodeName;
 
-        String rackIdOut = cmdKubeClient(testStorage.getNamespaceName()).execInPod(podName, "/bin/bash", "-c", "cat /opt/kafka/init/rack.id").out().trim();
-        String brokerRackOut = cmdKubeClient(testStorage.getNamespaceName()).execInPod(podName, "/bin/bash", "-c", "cat /tmp/strimzi.properties | grep broker.rack").out().trim();
+        String rackIdOut = cmdKubeClient().execInPod(testStorage.getNamespaceName(), podName, "/bin/bash", "-c", "cat /opt/kafka/init/rack.id").out().trim();
+        String brokerRackOut = cmdKubeClient().execInPod(testStorage.getNamespaceName(), podName, "/bin/bash", "-c", "cat /tmp/strimzi.properties | grep broker.rack").out().trim();
         assertThat(rackIdOut.trim(), is(hostname));
         assertThat(brokerRackOut.contains("broker.rack=" + hostname), is(true));
 
@@ -206,7 +206,7 @@ class RackAwarenessST extends AbstractST {
         // check Kafka client rack awareness configuration
         String podNodeName = pod.getSpec().getNodeName();
         String hostname = podNodeName.contains(".") ? podNodeName.substring(0, podNodeName.indexOf(".")) : podNodeName;
-        String commandOut = cmdKubeClient(testStorage.getNamespaceName()).execInPod(podName,
+        String commandOut = cmdKubeClient().execInPod(testStorage.getNamespaceName(), podName,
                 "/bin/bash", "-c", "cat /tmp/strimzi-connect.properties | grep consumer.client.rack").out().trim();
         assertThat(commandOut.equals("consumer.client.rack=" + hostname), is(true));
 
@@ -286,7 +286,7 @@ class RackAwarenessST extends AbstractST {
         // check Kafka client rack awareness configuration
         String podNodeName = pod.getSpec().getNodeName();
         String hostname = podNodeName.contains(".") ? podNodeName.substring(0, podNodeName.indexOf(".")) : podNodeName;
-        String commandOut = cmdKubeClient(testStorage.getNamespaceName()).execInPod(podName, "/bin/bash", "-c", "cat /tmp/strimzi-connect.properties | grep consumer.client.rack").out().trim();
+        String commandOut = cmdKubeClient().execInPod(testStorage.getNamespaceName(), podName, "/bin/bash", "-c", "cat /tmp/strimzi-connect.properties | grep consumer.client.rack").out().trim();
         assertThat(commandOut.equals("consumer.client.rack=" + hostname), is(true));
 
         // Mirroring messages by: Producing to the Source Kafka Cluster and consuming them from mirrored KafkaTopic in target Kafka Cluster.
@@ -325,7 +325,7 @@ class RackAwarenessST extends AbstractST {
             .endSpec()
             .build());
 
-        String kafkaConnectPodName = KubeClusterResource.kubeClient(namespace).listPods(connectClusterName, Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).get(0).getMetadata().getName();
+        String kafkaConnectPodName = KubeClusterResource.kubeClient().listPods(namespace, connectClusterName, Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).get(0).getMetadata().getName();
         LOGGER.info("KafkaConnect Pod: {}/{}", namespace, kafkaConnectPodName);
         KafkaConnectUtils.waitUntilKafkaConnectRestApiIsAvailable(namespace, kafkaConnectPodName);
 

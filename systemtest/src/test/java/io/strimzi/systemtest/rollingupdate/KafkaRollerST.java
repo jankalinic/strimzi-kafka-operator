@@ -102,7 +102,7 @@ public class KafkaRollerST extends AbstractST {
         resourceManager.createResourceWithWait(KafkaTemplates.kafkaPersistent(testStorage.getClusterName(), initialBrokerReplicaCount).build());
 
         LOGGER.info("Verify expected number of replicas '{}' is present in in Kafka Cluster: {}/{}", initialBrokerReplicaCount, testStorage.getNamespaceName(), testStorage.getClusterName());
-        final int observedReplicas = kubeClient(testStorage.getNamespaceName()).listPods(testStorage.getBrokerSelector()).size();
+        final int observedReplicas = kubeClient().listPods(testStorage.getNamespaceName(), testStorage.getBrokerSelector()).size();
         assertEquals(initialBrokerReplicaCount, observedReplicas);
 
         LOGGER.info("Create kafkaTopic: {}/{} with replica on each (of 3) broker", testStorage.getNamespaceName(), topicNameWith3Replicas);
@@ -135,8 +135,8 @@ public class KafkaRollerST extends AbstractST {
         resourceManager.createResourceWithWait(kafkaTopicWith4Replicas);
 
         //Test that the new pod does not have errors or failures in events
-        String uid = kubeClient(testStorage.getNamespaceName()).getPodUid(KafkaResource.getKafkaPodName(testStorage.getClusterName(), KafkaNodePoolResource.getBrokerPoolName(testStorage.getClusterName()),  3));
-        List<Event> events = kubeClient(testStorage.getNamespaceName()).listEventsByResourceUid(uid);
+        String uid = kubeClient().getPodUid(testStorage.getNamespaceName(), KafkaResource.getKafkaPodName(testStorage.getClusterName(), KafkaNodePoolResource.getBrokerPoolName(testStorage.getClusterName()),  3));
+        List<Event> events = kubeClient().listEventsByResourceUid(testStorage.getNamespaceName(), uid);
         assertThat(events, hasAllOfReasons(Scheduled, Pulled, Created, Started));
 
         clients = new KafkaClientsBuilder(clients)
@@ -271,7 +271,7 @@ public class KafkaRollerST extends AbstractST {
         );
         resourceManager.createResourceWithWait(KafkaTemplates.kafkaPersistent(testStorage.getClusterName(), 3, 3).build());
 
-        String kafkaImage = kubeClient(testStorage.getNamespaceName()).listPods(testStorage.getBrokerSelector()).get(0).getSpec().getContainers().get(0).getImage();
+        String kafkaImage = kubeClient().listPods(testStorage.getNamespaceName(), testStorage.getBrokerSelector()).get(0).getSpec().getContainers().get(0).getImage();
 
         KafkaResource.replaceKafkaResourceInSpecificNamespace(testStorage.getClusterName(), kafka -> {
             kafka.getSpec().getKafka().setImage("quay.io/strimzi/kafka:not-existent-tag");

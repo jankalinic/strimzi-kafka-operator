@@ -86,7 +86,7 @@ public class StrimziDowngradeST extends AbstractUpgradeST {
         waitForKafkaClusterRollingUpdate();
         logPodImages(TestConstants.CO_NAMESPACE);
         // Downgrade kafka
-        changeKafkaAndLogFormatVersion(downgradeData);
+        changeKafkaAndLogFormatVersion(TestConstants.CO_NAMESPACE, downgradeData);
         // Verify that pods are stable
         PodUtils.verifyThatRunningPodsAreStable(TestConstants.CO_NAMESPACE, clusterName);
         checkAllImages(downgradeData, TestConstants.CO_NAMESPACE);

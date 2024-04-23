@@ -183,7 +183,7 @@ public abstract class AbstractNamespaceST extends AbstractST {
         assertThat(kafkaCondition.getType(), is(Ready.toString()));
 
         LOGGER.info("Finding and Copying Secrets related to created KafkaUser into Namespace: {} which holds Kafka", testStorage.getNamespaceName());
-        List<Secret> secretsOfSecondNamespace = kubeClient(PRIMARY_KAFKA_WATCHED_NAMESPACE).listSecrets();
+        List<Secret> secretsOfSecondNamespace = kubeClient().listSecrets(PRIMARY_KAFKA_WATCHED_NAMESPACE);
 
         for (Secret s : secretsOfSecondNamespace) {
             if (s.getMetadata().getName().equals(testStorage.getUsername())) {
@@ -310,7 +310,7 @@ public abstract class AbstractNamespaceST extends AbstractST {
             .build());
         KafkaConnectorUtils.waitForConnectorReady(testStorage.getNamespaceName(), clusterName);
 
-        String kafkaConnectPodName = kubeClient(testStorage.getNamespaceName()).listPods(clusterName, Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).get(0).getMetadata().getName();
+        String kafkaConnectPodName = kubeClient().listPods(testStorage.getNamespaceName(), clusterName, Labels.STRIMZI_KIND_LABEL, KafkaConnect.RESOURCE_KIND).get(0).getMetadata().getName();
         LOGGER.info("KafkaConnect Pod: {}/{}", testStorage.getNamespaceName(), kafkaConnectPodName);
         KafkaConnectUtils.waitUntilKafkaConnectRestApiIsAvailable(testStorage.getNamespaceName(), kafkaConnectPodName);
 
@@ -359,7 +359,7 @@ public abstract class AbstractNamespaceST extends AbstractST {
             ScraperTemplates.scraperPod(MAIN_TEST_NAMESPACE, scraperName).build()
         );
 
-        scraperPodName = kubeClient().listPodsByPrefixInName(MAIN_TEST_NAMESPACE, scraperName).get(0).getMetadata().getName();
+        scraperPodName = kubeClient().listPodsInNamespaceWithPrefix(MAIN_TEST_NAMESPACE, scraperName).get(0).getMetadata().getName();
 
     }
 }

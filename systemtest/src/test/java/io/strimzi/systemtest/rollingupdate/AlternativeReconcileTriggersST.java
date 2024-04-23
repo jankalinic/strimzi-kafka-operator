@@ -258,13 +258,13 @@ class AlternativeReconcileTriggersST extends AbstractST {
         Map<String, String> kafkaSnapshot = Collections.singletonMap(kafkaPod.getMetadata().getName(), kafkaPod.getMetadata().getUid());
         Map<String, String> zkSnapshot = null;
         if (!Environment.isKRaftModeEnabled()) {
-            Pod zkPod = kubeClient(testStorage.getNamespaceName()).getPod(KafkaResources.zookeeperPodName(testStorage.getClusterName(), 0));
+            Pod zkPod = kubeClient().getPod(testStorage.getNamespaceName(), KafkaResources.zookeeperPodName(testStorage.getClusterName(), 0));
             // snapshot of one single ZK pod
             zkSnapshot = Collections.singletonMap(zkPod.getMetadata().getName(), zkPod.getMetadata().getUid());
         }
 
         LOGGER.info("Trying to roll just single Kafka and single ZK Pod");
-        kubeClient(testStorage.getNamespaceName()).editPod(kafkaPodName).edit(pod -> new PodBuilder(pod)
+        kubeClient().editPod(testStorage.getNamespaceName(), kafkaPodName).edit(pod -> new PodBuilder(pod)
             .editMetadata()
                 .addToAnnotations(Annotations.ANNO_STRIMZI_IO_MANUAL_ROLLING_UPDATE, "true")
             .endMetadata()
@@ -275,7 +275,7 @@ class AlternativeReconcileTriggersST extends AbstractST {
         kafkaSnapshot = RollingUpdateUtils.waitTillComponentHasRolled(testStorage.getNamespaceName(), testStorage.getBrokerSelector(), 3, kafkaSnapshot);
 
         if (!Environment.isKRaftModeEnabled()) {
-            kubeClient(testStorage.getNamespaceName()).editPod(KafkaResources.zookeeperPodName(testStorage.getClusterName(), 0)).edit(pod -> new PodBuilder(pod)
+            kubeClient().editPod(testStorage.getNamespaceName(), KafkaResources.zookeeperPodName(testStorage.getClusterName(), 0)).edit(pod -> new PodBuilder(pod)
                 .editMetadata()
                     .addToAnnotations(Annotations.ANNO_STRIMZI_IO_MANUAL_ROLLING_UPDATE, "true")
                 .endMetadata()
@@ -287,7 +287,7 @@ class AlternativeReconcileTriggersST extends AbstractST {
 
         LOGGER.info("Adding anno to all ZK and Kafka Pods");
         kafkaSnapshot.keySet().forEach(podName -> {
-            kubeClient(testStorage.getNamespaceName()).editPod(podName).edit(pod -> new PodBuilder(pod)
+            kubeClient().editPod(testStorage.getNamespaceName(), podName).edit(pod -> new PodBuilder(pod)
                 .editMetadata()
                     .addToAnnotations(Annotations.ANNO_STRIMZI_IO_MANUAL_ROLLING_UPDATE, "true")
                 .endMetadata()
@@ -299,7 +299,7 @@ class AlternativeReconcileTriggersST extends AbstractST {
 
         if (!Environment.isKRaftModeEnabled()) {
             zkSnapshot.keySet().forEach(podName -> {
-                kubeClient(testStorage.getNamespaceName()).editPod(podName).edit(pod -> new PodBuilder(pod)
+                kubeClient().editPod(testStorage.getNamespaceName(), podName).edit(pod -> new PodBuilder(pod)
                     .editMetadata()
                         .addToAnnotations(Annotations.ANNO_STRIMZI_IO_MANUAL_ROLLING_UPDATE, "true")
                     .endMetadata()
